@@ -338,7 +338,7 @@ class PontoFormList extends TPage
             $object->data_ponto ? $object->data_ponto = $this->string->formatDate($object->data_ponto) : null;
          
             $object->hora_entrada = $object->qtde_horas.':'.$object->qtde_minutos.':00';
-            if($object->qtde_horas_final || $object->qtde_minutos_final)
+            if($object->qtde_horas_final)
             {
                 $object->hora_saida   = str_pad($object->qtde_horas_final, 2, 0, STR_PAD_LEFT).':'.str_pad($object->qtde_minutos_final, 2, 0, STR_PAD_LEFT).':00';
             }
@@ -346,6 +346,11 @@ class PontoFormList extends TPage
             if(!$object->qtde_horas_final && !$object->qtde_minutos_final)
             {
                 $object->hora_saida = '';
+            }
+            
+            if(!$object->qtde_horas_final && $object->qtde_minutos_final)
+            {
+                throw new Exception("Horário final inválido");   
             }
             
             $validador = new THoraSaidaPontoValidator;

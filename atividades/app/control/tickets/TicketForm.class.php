@@ -156,12 +156,10 @@ class TicketForm extends TPage
         $combo_solicitante_id->setSize(390);
         
         // validações
-
         $titulo->addValidation('Titulo', new TRequiredValidator);
         $combo_solicitante_id->addValidation('Solicitante', new TRequiredValidator);
         $responsavel_id->addValidation('Responsável', new TRequiredValidator);
         $sistema_id->addValidation('Sistema', new TRequiredValidator);   
-        
         
         $gerar_dr = TButton::create('gerar_dr', array('RequisitoDesenvolvimentoForm', 'onEdit'), 'Gerar DTR', 'ico_add.png');
         $link_dtr = new TButton('link_dtr');

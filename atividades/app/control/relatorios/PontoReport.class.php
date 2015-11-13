@@ -191,7 +191,7 @@ class PontoReport extends TPage
                 foreach($dias as $dia)
                 {
                     $tr->addCell(substr($dia['dias'], -2), 'center', 'title');
-                    $arrayDias[substr($dia['dias'], -2)] = $dia['dias']; 
+                    $arrayDias[substr($dia['dias'], -2)] = $dia['dias'];
                 }
                 $tr->addCell('TOTAL', 'center', 'title');
                                 
@@ -235,7 +235,7 @@ class PontoReport extends TPage
                         }
                         
                         $x = $this->retornaPonto($pessoa->pessoa_codigo, $dia);
-               
+                                   
                         if($this->string->time_to_sec($x) > 0){
                                $totalAtividades += $this->string->time_to_sec($horas);
                                $arrayAtividades[$dia] += $this->string->time_to_sec($horas); 
@@ -303,6 +303,40 @@ class PontoReport extends TPage
                 $var = rand(0, 1000);
                 
                 $tr->addCell(date('d/m/Y H:i:s'), 'center', 'footer', 33);
+                
+                foreach($arrayAtividades as $key => $value)
+                {
+                    if($key <> 'total'){
+                        $yAtividades[substr($key, -2)] = $this->string->sec_to_time($value);
+                        $xLabel[substr($key, -2)]     = substr($key, -2);
+                    }
+                }
+                
+                foreach($arrayPonto as $key => $value)
+                {
+                    if($key <> 'total'){
+                        $yPonto[substr($key, -2)] = $this->string->sec_to_time($value);
+                    }
+                }
+                
+                ksort($yAtividades);
+                ksort($yPonto); 
+                ksort($xLabel);
+                
+                $chart = new TLineChart(new TPChartDesigner);
+                $chart->setTitle('Totais', NULL, NULL);
+                $chart->setSize(1100,600);
+                $chart->setXLabels($xLabel);
+                $chart->setYLabel('Horas');
+                $chart->setOutputPath('app/output/linechart_{$var}.png');
+                $chart->addData('Atividades', $yAtividades);
+                $chart->addData('Ponto', $yPonto);
+                $chart->generate();
+                
+                $tr->addRow();
+                $tr->addCell(new TImage('app/output/linechart_{$var}.png'), 'center', 'datai', 33);
+                
+                
                 // stores the file
                 if (!file_exists("app/output/Ponto_{$var}.{$format}") OR is_writable("app/output/Ponto_{$var}.{$format}"))
                 {

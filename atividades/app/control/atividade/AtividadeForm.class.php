@@ -118,8 +118,13 @@ class AtividadeForm extends TPage
         $qtde_horas->setChangeAction($change_action);
         $qtde_minutos->setChangeAction($change_action);
         
+        $change_atividade_action = new TAction(array($this, 'onTrocaTipoAtividade'));
+        $tipo_atividade_id->setChangeAction($change_atividade_action);
+        
         $change_ticket_action = new TAction(array($this, 'onTrocaTicket'));
         $ticket_id->setChangeAction($change_ticket_action);
+        
+
         
         // define the sizes
         $id->setSize(100);
@@ -139,6 +144,7 @@ class AtividadeForm extends TPage
         $tipo_atividade_id->addValidation('Tipo de Atividade', new TRequiredValidator);
         $ticket_id->addValidation('Ticket', new TRequiredValidator);
         $sistema_id->addValidation('Sistema', new TRequiredValidator);
+        $descricao->addValidation('Descrição', new TMinLengthValidator, array(10));
         
         $sem_atividade = TButton::create('atividade', array($this, 'onSemAtividade'), 'Sem Registro', 'ico_add.png');
         $this->form->addField($sem_atividade);
@@ -157,12 +163,16 @@ class AtividadeForm extends TPage
         $label_ticket->setFontColor('#FF0000');
         $table->addRowSet( $label_sistema = new TLabel('Sistema:'), $sistema_id );
         $label_sistema->setFontColor('#FF0000');
-        $table->addRowSet( new TLabel('Descrição:'), $descricao );   
+        $table->addRowSet( $label_descricao = new TLabel('Descrição:'), $descricao ); 
+        $label_descricao->setFontColor('#FF0000');  
         $table->addRowSet( new TLabel(''), $id );
         $table->addRowSet( new TLabel(''), $colaborador_id );
         $table->addRowSet( new TLabel(''), $hora_fim );   //esconder
 
         $this->form->setFields(array($id,$data_atividade,$hora_inicio,$qtde_horas,$qtde_minutos,$hora_fim,$tempo_atividade,$descricao,$colaborador_id,$colaborador_nome,$tipo_atividade_id,$ticket_id,$sistema_id));
+
+
+
 
         // create the form actions
         $save_button = TButton::create('save', array($this, 'onSave'), _t('Save'), 'ico_save.png');
@@ -185,6 +195,13 @@ class AtividadeForm extends TPage
         $row = $table->addRow();
         $row->class = 'tformaction'; // CSS class
         $row->addCell($buttons_box)->colspan = 2;
+
+
+
+
+
+
+//                        TScript::create(' $( "#descricao" ).focus(); ');
         
         parent::add($this->form);
     }
@@ -217,6 +234,36 @@ class AtividadeForm extends TPage
         }
         
         TCombo::reload('form_Atividade', 'ticket_id', $options);
+    }
+    
+    public static function onTrocaTipoAtividade($param)
+    {
+        $obj = new StdClass;
+        $obj->ticket_id = '';
+        $obj->sistema_id = '';
+        if($param['tipo_atividade_id'])
+        {   
+            try
+            {
+                TTransaction::open('atividade');
+                $atividade = new TipoAtividade($param['tipo_atividade_id']);
+                $obj->ticket_id  = $atividade->ticket_id;
+                $obj->sistema_id = $atividade->sistema_id;
+                TTransaction::close();
+            }
+            catch(Exception $e)
+            {
+                new TMessage('error', $e->getMessage());
+            }
+        }
+        
+        if($atividade->ticket_id && $atividade->sistema_id){
+            TScript::create(' form_Atividade.descricao.focus(); ');
+        }
+        
+        TForm::sendData('form_Atividade', $obj, FALSE, FALSE); 
+
+        
     }
     
     public static function onTrocaTicket($param)

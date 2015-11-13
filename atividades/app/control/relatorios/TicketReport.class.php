@@ -80,6 +80,8 @@ class TicketReport extends TPage
         $colaborador_id                 = new TDBCombo('colaborador_id', 'atividade', 'Pessoa', 'pessoa_codigo', 'pessoa_nome', 'pessoa_nome', $criteria);
         
         $tipo_atividade_id              = new TDBCombo('tipo_atividade_id', 'atividade', 'TipoAtividade', 'id', 'nome', 'nome');
+        
+        $pesquisa_master                = new TEntry('pesquisa_master');
                 
         $tipo                           = new TRadioGroup('tipo');
         $output_type                    = new TRadioGroup('output_type');
@@ -102,7 +104,6 @@ class TicketReport extends TPage
         $dataAtividadeFinal->setSize(100);
         $tipo->setSize(100);
         $output_type->setSize(100);
-
 
         // validations
         $output_type->addValidation('Output', new TRequiredValidator);
@@ -149,6 +150,21 @@ class TicketReport extends TPage
         $frame2->addRowSet( new TLabel('Tipo atividade:'), $tipo_atividade_id);
         $frame2->addRowSet( new TLabel('Sistema:'), $atividade_sistema_id );
         
+        // creates a frame
+        $frame = new TFrame;
+        $frame->oid = 'frame-measures';
+        $frame->setLegend('Pesquisa Master:');
+        
+        $row=$table->addRow();
+        $cell=$row->addCell($frame);
+        $cell->colspan=2;
+        
+        $frame3 = new TTable;
+        $frame->add($frame3);
+
+        $frame3->addRowSet( new TLabel('<nobr>Por palavra:</nobr>'), $pesquisa_master );
+        $frame3->addRowSet( new TLabel(''), new TLabel('Essa pesquisa busca pelo titulo do ticket e da descrição da atividade') );
+        
         $table->addRowSet( new TLabel('Relatório'), $tipo);
         $table->addRowSet( new TLabel('Output:'), $output_type );
 
@@ -168,6 +184,7 @@ class TicketReport extends TPage
                                      $colaborador_id,
                                      $tipo_atividade_id,
                                      $atividade_sistema_id,
+                                     $pesquisa_master,
                                      $tipo,
                                      $output_type));
 
@@ -292,13 +309,21 @@ class TicketReport extends TPage
                 $where .= " and t.tipo_ticket_id = {$formdata->tipo_ticket_id} ";
             }
             
+            if ($formdata->pesquisa_master)
+            {
+                $where .= " and (t.titulo ilike '%$formdata->pesquisa_master%' or a.descricao ilike '%$formdata->pesquisa_master%') ";
+            }
+            
+            //  and (t.titulo ilike %{$formdata->pesquisa_master}% or a.descricao ilike %{$formdata->pesquisa_master}%)
+
+            
             $format  = $formdata->output_type;
             
             $objects = Ticket::relatorioSintetico($where);
             
             if ($objects)
             {
-              //  $widths = array(30,30,30,30,70,70,70,80,30,250,250,30,250,50,50,50);
+                $widths = null;
                 
                 switch ($format)
                 {

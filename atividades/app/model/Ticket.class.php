@@ -117,7 +117,7 @@ class Ticket extends TRecord
             
         foreach ($tickets as $row)
         {
-            if($row->id <> 328)
+            if($row->id <> 328 and $row->id <> 514)
             {
                 $retorno[] = $row->id;
             }

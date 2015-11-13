@@ -83,9 +83,21 @@
     
     <menuitem label='Tabelas de apoio'>
         <menu>
+            <menuitem label='Cadastro de carga horaria'>
+                <icon></icon>
+                <action>CargaHorariaFormList</action>
+            </menuitem>
+            <menuitem label='Cadastro de ausências'>
+                <icon></icon>
+                <action>AusenciaForm</action>
+            </menuitem>
             <menuitem label='Tipos de Atividades'>
                 <icon></icon>
                 <action>TipoAtividadeFormList</action>
+            </menuitem>
+            <menuitem label='Vinculos dos tipos atividade'>
+                <icon></icon>
+                <action>TipoAtividadesVinculos</action>
             </menuitem>
             <menuitem label='Tipos de Tickets'>
                 <icon></icon>

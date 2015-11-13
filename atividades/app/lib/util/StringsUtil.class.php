@@ -21,8 +21,7 @@ class StringsUtil
             return $retorno;    
         }
     }
-    
-    
+        
     public function formatHoras($campo, $object, $row)
     {        
         $object->orcamento_horas ? $campo = strstr($object->orcamento_horas, ':', true) : null;
@@ -106,6 +105,27 @@ class StringsUtil
     function retira_segundos($horario)
     {
         return substr($horario, 0, -3);
+    }
+    
+    function retorna_mes($mes)
+    {
+        $meses = array(
+                            1 => 'Janeiro',
+                            'Fevereiro',
+                            'Março',
+                            'Abril',
+                            'Maio',
+                            'Junho',
+                            'Julho',
+                            'Agosto',
+                            'Setembro',
+                            'Outubro',
+                            'Novembro',
+                            'Dezembro'
+                        );
+       
+       return $meses[$mes];
+        
     }
     
 }

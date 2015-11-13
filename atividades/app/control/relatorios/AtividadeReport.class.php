@@ -7,6 +7,7 @@ class AtividadeReport extends TPage
 {
     protected $form; // form
     protected $notebook;
+    private $string;
     
     /**
      * Class constructor
@@ -20,7 +21,7 @@ class AtividadeReport extends TPage
         $this->form = new TForm('form_Atividade_report');
         $this->form->class = 'tform'; // CSS class
         $this->form->style = 'width: 500px';
-        $string = new StringsUtil;
+        $this->string = new StringsUtil;
         
         // creates the table container
         $table = new TTable;
@@ -82,7 +83,7 @@ class AtividadeReport extends TPage
         
         $mes_atividade                  = new TCombo('mes_atividade');
         
-        $mes_atividade->addItems($string->array_meses());
+        $mes_atividade->addItems($this->string->array_meses());
         $mes_atividade->setDefaultOption(FALSE);
         $mes_atividade->setValue(date('m'));
         
@@ -124,6 +125,33 @@ class AtividadeReport extends TPage
         parent::add($this->form);
     }
 
+    function retornaPonto($user, $mes)
+    {
+        $ano = date("Y"); // Ano atual
+        $ultimo_dia = date("t", mktime(0,0,0,$mes,'01',$ano));
+        $totalPonto = null;
+        
+        for ($dia = 1; $dia <= $ultimo_dia; $dia++)
+        {
+        
+            $data = $ano.'-'.$mes.'-'.$dia;
+            $ponto = Ponto::retornaTempoPonto($user, $data);
+                        
+            $total = new DateTime($ponto);
+            $almoco = new DateTime('01:00:00');
+            $limite = new DateTime('06:00:00');
+            if($total > $limite)
+            {
+                $ponto = $total->diff($almoco)->format('%H:%I:%S');
+            }
+            
+            $totalPonto += $this->string->time_to_sec($ponto);
+        
+        }
+        
+        return $this->string->sec_to_time($totalPonto);
+    }
+
     /**
      * method onGenerate()
      * Executed whenever the user clicks at the generate button
@@ -137,9 +165,7 @@ class AtividadeReport extends TPage
             
             // get the form data into an active record
             $formdata = $this->form->getData();
-            
-            $string = new StringsUtil;
-            
+
             $format  = $formdata->output_type;
             
             $tickets = null;
@@ -189,6 +215,51 @@ class AtividadeReport extends TPage
                 {
                     $colaborador = new Pessoa($formdata->colaborador_id);
                     $titulo = utf8_decode($colaborador->pessoa_nome);
+                    
+                    $totalPonto = $this->retornaPonto($formdata->colaborador_id, $formdata->mes_atividade);
+                    
+                    $criteria     = new TCriteria;
+                    $criteria->add(new TFilter("mes",             "=", $formdata->mes_atividade));
+                    $criteria->add(new TFilter("ano",             "=", $formdata->ano_atividade));
+                    $criteria->add(new TFilter("colaborador_id",  "=", $formdata->colaborador_id));
+                    $repo         = new TRepository('CargaHoraria');
+                    $cargaHoraria = $repo->load($criteria);
+                    
+                    foreach($cargaHoraria as $carga)
+                    {
+                        $horario = $carga->horario;
+                    }
+                    
+                }
+                else 
+                {
+                    //calcular todos
+                    $criteria     = new TCriteria;
+                    $criteria->add(new TFilter("mes",             "=", $formdata->mes_atividade));
+                    $criteria->add(new TFilter("ano",             "=", $formdata->ano_atividade));
+                    $repo         = new TRepository('CargaHoraria');
+                    $cargaHoraria = $repo->load($criteria);
+                    
+                    foreach($cargaHoraria as $carga)
+                    {
+                        $horario += $this->string->time_to_sec($carga->horario);
+                    }
+                
+                    $criteria = new TCriteria;
+                    $criteria->add(new TFilter("origem", "=", 1));
+                    $criteria->add(new TFilter("codigo_cadastro_origem", "=", 100));
+                    $criteria->add(new TFilter("ativo", "=", 1));
+                    $criteria->add(new TFilter("usuario", "is not "));
+                    $repo = new TRepository('Pessoa');
+                    $pessoas = $repo->load($criteria);
+                
+                    foreach($pessoas as $pessoa)
+                    {
+                        $totalPonto += $this->string->time_to_sec($this->retornaPonto($pessoa->pessoa_codigo, $formdata->mes_atividade));
+                    }                
+                    
+                    $horario     = $this->string->sec_to_time($horario);
+                    $totalPonto  = $this->string->sec_to_time($totalPonto);
                 }
                 
                                 
@@ -196,7 +267,111 @@ class AtividadeReport extends TPage
                 $tr->addRow();
                 $tr->addCell('', 'center', 'title');
                 $tr->addCell($titulo, 'center', 'title');
-                $tr->addCell("{$string->array_meses()[$formdata->mes_atividade]}-{$formdata->ano_atividade}", 'center', 'title',2);
+                $tr->addCell("{$this->string->array_meses()[$formdata->mes_atividade]}-{$formdata->ano_atividade}", 'center', 'title',2);
+                                
+                // add a header row
+                $tr->addRow();
+                $tr->addCell('', 'center', 'header');
+                $tr->addCell('Indicadores', 'center', 'header');
+                $tr->addCell('Horas', 'center', 'header');
+                $tr->addCell('%', 'center', 'header');   
+                
+                // data rows
+                $style = 'datai';
+                
+                $tr->addRow();
+                $tr->addCell('', 'center', $style);
+                $tr->addCell(utf8_decode('Carga horária mensal:'), 'left', $style);
+                $tr->addCell($this->string->retira_segundos($horario), 'right', $style);
+                $tr->addCell('100%', 'right', $style);
+                    
+                $tr->addRow();
+                $tr->addCell('', 'center', $style);
+                $tr->addCell(utf8_decode('Horas ponto total:'), 'left', $style);
+                $tr->addCell($this->string->retira_segundos($totalPonto), 'right', $style);
+                $tr->addCell(round(($this->string->time_to_sec($totalPonto))*100/$this->string->time_to_sec($horario)).'%', 'right', $style);
+                                   
+                 
+                $cri = new TCriteria;
+                if($formdata->colaborador_id > 0){
+                    $cri->add(new TFilter("colaborador_id", "=", $formdata->colaborador_id));
+                }
+            	$cri->add(new TFilter("ticket_id", "IN", array(328,514)));
+            	$cri->add(new TFilter("extract('month' from data_atividade)", "=", $formdata->mes_atividade));
+            	$cri->add(new TFilter("extract('year' from data_atividade)", "=", $formdata->ano_atividade)); 
+            	$repo = new TRepository('Atividade');
+            	$ausencias = $repo->count($cri); 
+                if($ausencias)
+            	{
+                	$horas = $repo->load($cri);	
+                	foreach ($horas as $h)
+                	{
+                	    $tempo += $this->string->time_to_sec($h->hora_fim) - $this->string->time_to_sec($h->hora_inicio);
+                	}
+	                
+	                $pontoUtil = $this->string->time_to_sec($totalPonto) - $tempo;
+	                
+	                $tr->addRow();
+                    $tr->addCell('', 'center', $style);
+                    $tr->addCell(utf8_decode('Horas ponto útil:'), 'left', $style);
+                    $tr->addCell($this->string->retira_segundos($this->string->sec_to_time($pontoUtil)), 'right', $style);
+                    $tr->addCell(round($pontoUtil*100/$this->string->time_to_sec($horario)).'%', 'right', $style);
+                    
+                    $tr->addRow();
+                    $tr->addCell('', 'center', 'datap');
+                    $tr->addCell(utf8_decode('Horas atividade (indicador total):'), 'left', 'datap');
+                    $tr->addCell($this->string->retira_segundos($total), 'right', 'datap');
+                    $tr->addCell(round(($this->string->time_to_sec($total))*100/$this->string->time_to_sec($totalPonto)).'%', 'right', 'datap');
+                    
+                    $tr->addRow();
+                    $tr->addCell('', 'center', 'datap');
+                    $tr->addCell(utf8_decode('Horas atividade (indicador útil):'), 'left', 'datap');
+                    $tr->addCell($this->string->retira_segundos($total), 'right', 'datap');
+                    $tr->addCell(round(($this->string->time_to_sec($total))*100/$pontoUtil).'%', 'right', 'datap');
+                    
+            	} 
+                else
+                {
+                    $tr->addRow();
+                    $tr->addCell('', 'center', $style);
+                    $tr->addCell(utf8_decode('Horas atividade:'), 'left', $style);
+                    $tr->addCell($this->string->retira_segundos($total), 'right', $style);
+                    $tr->addCell(round(($this->string->time_to_sec($total))*100/$this->string->time_to_sec($totalPonto)).'%', 'right', $style);
+                } 
+                // division row
+                $tr->addRow();
+                $tr->addCell($break, 'center', 'datai', 4);
+                
+                //ATESTADOS MEDICOS
+                $objects = Atividade::retornaAtestadosMedicos($formdata->colaborador_id, $formdata->mes_atividade, $formdata->ano_atividade);
+                // add a header row
+                $tr->addRow();
+                $tr->addCell('', 'center', 'header');
+                $tr->addCell(utf8_decode('Ausências'), 'center', 'header');
+                $tr->addCell('Horas', 'center', 'header');
+                $tr->addCell('', 'center', 'header');   
+                // controls the background filling
+                $colour= FALSE;
+                $seq = 1;
+                // data rows
+                foreach ($objects as $row)
+                {
+                    $style = $colour ? 'datap' : 'datai';
+                    
+                    $ticket = new Ticket($row['ticket_id']);
+                    $tr->addRow();
+                    $tr->addCell($seq, 'center', $style);
+                    $tr->addCell(utf8_decode($ticket->titulo), 'left', $style);
+                    $tr->addCell($this->string->retira_segundos($row['total']), 'right', $style);
+                    $tr->addCell(round(($this->string->time_to_sec($row['total']))*100/$this->string->time_to_sec($totalPonto)).'%', 'right', $style);
+                    
+                    $seq++;                    
+                    $colour = !$colour;
+                }
+                
+                // division row
+                $tr->addRow();
+                $tr->addCell($break, 'center', 'datai', 4);
                 
                 $objects = Atividade::retornaAtividadesColaborador($formdata->colaborador_id, $formdata->mes_atividade, $formdata->ano_atividade, $tickets);
                 
@@ -216,8 +391,8 @@ class AtividadeReport extends TPage
                     $tr->addRow();
                     $tr->addCell($seq, 'center', $style);
                     $tr->addCell(utf8_decode($row['nome']), 'left', $style);
-                    $tr->addCell($row['total'], 'right', $style);
-                    $tr->addCell(round(($string->time_to_sec($row['total'])/$string->time_to_sec($total))*100) .'%', 'right', $style);
+                    $tr->addCell($this->string->retira_segundos($row['total']), 'right', $style);
+                    $tr->addCell(round(($this->string->time_to_sec($row['total'])/$this->string->time_to_sec($total))*100) .'%', 'right', $style);
                     
                     $seq++;                    
                     $colour = !$colour;
@@ -226,38 +401,8 @@ class AtividadeReport extends TPage
                 $tr->addRow();
                 $tr->addCell('', 'right', 'footer');
                 $tr->addCell('Total:', 'left', 'footer');
-                $tr->addCell($total, 'right', 'footer');
+                $tr->addCell($this->string->retira_segundos($total), 'right', 'footer');
                 $tr->addCell('100%', 'right', 'footer');
-                // division row
-                $tr->addRow();
-                $tr->addCell($break, 'center', 'datai', 4);
-                
-                //ATESTADOS MEDICOS
-                
-                $objects = Atividade::retornaAtestadosMedicos($formdata->colaborador_id, $formdata->mes_atividade, $formdata->ano_atividade);
-                // add a header row
-                $tr->addRow();
-                $tr->addCell('', 'center', 'header');
-                $tr->addCell(utf8_decode('Atestado Médico'), 'center', 'header');
-                $tr->addCell('Horas', 'center', 'header');
-                $tr->addCell('', 'center', 'header');   
-                // controls the background filling
-                $colour= FALSE;
-                $seq = 1;
-                // data rows
-                foreach ($objects as $row)
-                {
-                    $style = $colour ? 'datap' : 'datai';
-                    $tr->addRow();
-                    $tr->addCell($seq, 'center', $style);
-                    $tr->addCell('Horas atestado', 'left', $style);
-                    $tr->addCell($row['total'], 'right', $style);
-                    $tr->addCell('', 'right', $style);
-                    
-                    $seq++;                    
-                    $colour = !$colour;
-                }
-                
                 // division row
                 $tr->addRow();
                 $tr->addCell($break, 'center', 'datai', 4);
@@ -279,8 +424,8 @@ class AtividadeReport extends TPage
                     $tr->addRow();
                     $tr->addCell($seq, 'center', $style);
                     $tr->addCell(utf8_decode($row['nome']), 'left', $style);
-                    $tr->addCell($row['total'], 'right', $style);
-                    $tr->addCell(round(($string->time_to_sec($row['total'])/$string->time_to_sec($total))*100) .'%', 'right', $style);
+                    $tr->addCell($this->string->retira_segundos($row['total']), 'right', $style);
+                    $tr->addCell(round(($this->string->time_to_sec($row['total'])/$this->string->time_to_sec($total))*100) .'%', 'right', $style);
                     
                     $seq++;                    
                     $colour = !$colour;
@@ -289,7 +434,7 @@ class AtividadeReport extends TPage
                 $tr->addRow();
                 $tr->addCell('', 'right', 'footer');
                 $tr->addCell('Total:', 'left', 'footer');
-                $tr->addCell($total, 'right', 'footer');
+                $tr->addCell($this->string->retira_segundos($total), 'right', 'footer');
                 $tr->addCell('100%', 'right', 'footer');
                 // division row
                 $tr->addRow();
@@ -307,7 +452,7 @@ class AtividadeReport extends TPage
                     {
                         $ind = 999;
                     }
-                    $array[$ind] += $string->time_to_sec($row['total']); 
+                    $array[$ind] += $this->string->time_to_sec($row['total']); 
                 }
                 ksort($array);
                 // add a header row
@@ -335,8 +480,8 @@ class AtividadeReport extends TPage
                     $tr->addRow();
                     $tr->addCell($seq, 'center', $style);
                     $tr->addCell(utf8_decode($nome), 'left', $style);
-                    $tr->addCell($string->sec_to_time($value), 'right', $style);
-                    $tr->addCell(round(($value/$string->time_to_sec($total))*100) .'%', 'right', $style);
+                    $tr->addCell($this->string->retira_segundos($this->string->sec_to_time($value)), 'right', $style);
+                    $tr->addCell(round(($value/$this->string->time_to_sec($total))*100) .'%', 'right', $style);
                     $seq++;                    
                     $colour = !$colour;
                 }
@@ -345,7 +490,7 @@ class AtividadeReport extends TPage
                 $tr->addRow();
                 $tr->addCell('', 'right', 'footer');
                 $tr->addCell('Total:', 'left', 'footer');
-                $tr->addCell($total, 'right', 'footer');
+                $tr->addCell($this->string->retira_segundos($total), 'right', 'footer');
                 $tr->addCell('100%', 'right', 'footer');
                 // division row
                 $tr->addRow();

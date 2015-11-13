@@ -9,6 +9,7 @@ class AtividadeList extends TPage
     private $datagrid; // listing
     private $pageNavigation;
     private $loaded;
+    private $string;
     
     /**
      * Class constructor
@@ -18,6 +19,7 @@ class AtividadeList extends TPage
     {
         parent::__construct();
 
+        $this->string = new StringsUtil;
         // creates the form
         $this->form = new TForm('form_search_Atividade');
         $this->form->class = 'tform'; // CSS class
@@ -34,15 +36,20 @@ class AtividadeList extends TPage
         
         // create the form fields
         $id                             = new THidden('id');
-        $data_atividade                 = new TDate('data_atividade');
-        $data_atividade->setMask('dd/mm/yyyy');
+        $data_atividade_inicial         = new TDate('data_atividade_inicial');
+        $data_atividade_inicial->setMask('dd/mm/yyyy');
+        $data_atividade_final           = new TDate('data_atividade_final');
+        $data_atividade_final->setMask('dd/mm/yyyy');
         $criteria = new TCriteria;
         $criteria->add(new TFilter("origem", "=", 1));
         $criteria->add(new TFilter("codigo_cadastro_origem", "=", 100));
+        $criteria->add(new TFilter("ativo", "=", 1));
+        $criteria->add(new TFilter("usuario", "is not "));
         $colaborador_id                 = new TDBCombo('colaborador_id', 'atividade', 'Pessoa', 'pessoa_codigo', 'pessoa_nome', 'pessoa_nome', $criteria);
         $tipo_atividade_id              = new TDBCombo('tipo_atividade_id', 'atividade', 'TipoAtividade', 'id', 'nome', 'nome');
         $ticket_id                      = new TDBMultiSearch('ticket_id', 'atividade', 'Ticket', 'id', 'titulo', 'titulo');
-        
+        $pesquisa_master                = new TEntry('pesquisa_master');
+                
         $criteria = new TCriteria;
         $criteria->add(new TFilter("ativo", "=", 1));
         $newparam['order'] = 'pessoa_nome';
@@ -51,28 +58,41 @@ class AtividadeList extends TPage
         $solicitante_id                 = new TDBSeekButton('solicitante_id', 'atividade','form_search_Ticket','Pessoa','pessoa_nome','solicitante_id', 'solicitante_nome', $criteria);
         $solicitante_nome               = new TEntry('solicitante_nome');
         $solicitante_nome->setEditable(FALSE);
+        $total_atividades               = new TEntry('total_atividades');
+        $total_atividades->setEditable(FALSE);
                 
         // define the sizes
         $id->setSize(50);
-        $data_atividade->setSize(100);
-        $colaborador_id->setSize(265);
-        $tipo_atividade_id->setSize(265);
+        $data_atividade_inicial->setSize(100);
+        $data_atividade_final->setSize(100);
+        $colaborador_id->setSize(300);
+        $tipo_atividade_id->setSize(300);
         $ticket_id->setMinLength(0);
         $ticket_id->setMaxSize(1);
         $ticket_id->setSize(300);
         $ticket_id->setOperator('ilike');
         $solicitante_id->setSize(40);
+        $solicitante_nome->setSize(235);
+        $total_atividades->setSize(100);
+        $pesquisa_master->setSize(300);
         
         // add one row for each form field
         $table->addRowSet( new TLabel('Solicitante:'), array($solicitante_id, $solicitante_nome) );
         $table->addRowSet( new TLabel('Colaborador:'), $colaborador_id );
-        $table->addRowSet( new TLabel('Data:'), $data_atividade );
+        $table->addRowSet( new TLabel('Dt. Atividades inicio:'), array($data_atividade_inicial,  $label_data_fim = new TLabel('Fim:'), $data_atividade_final ));
+        $label_data_fim->setSize(48);
         $table->addRowSet( new TLabel('Atividade:'), $tipo_atividade_id );
         $table->addRowSet( new TLabel('Ticket:'), $ticket_id );
+        $table->addRowSet( new TLabel('Pesquisa por palavra:'), $pesquisa_master );
+        $table->addRowSet( new TLabel('Total horas atividades:'), $total_atividades );
         $table->addRowSet( new TLabel(''), $id );
         
-        $this->form->setFields(array($id,$data_atividade,$colaborador_id,$tipo_atividade_id,$ticket_id, $solicitante_id, $solicitante_nome));
+        $this->form->setFields(array($id,$data_atividade_inicial,$data_atividade_final,$colaborador_id,$tipo_atividade_id,$ticket_id, $solicitante_id, $solicitante_nome,$pesquisa_master,$total_atividades));
         
+        $change_data = new TAction(array($this, 'onChangeData'));
+        $data_atividade_inicial->setExitAction($change_data);
+        $data_atividade_final->setExitAction($change_data);
+                
         // keep the form filled during navigation with session data
         $this->form->setData( TSession::getValue('Atividade_filter_data') );
         
@@ -115,8 +135,6 @@ class AtividadeList extends TPage
         $data_atividade->setTransformer(array('StringsUtil', 'formatDateBR'));
         $hora_inicio->setTransformer(array('StringsUtil', 'retira_segundos'));
         $hora_fim->setTransformer(array('StringsUtil', 'retira_segundos'));
-        
-        //exemplo de uso de classe para jogar funcoes
         
         // add the columns to the DataGrid
         $this->datagrid->addColumn($data_atividade);
@@ -175,6 +193,27 @@ class AtividadeList extends TPage
         parent::add($container);
     }
     
+    public static function onChangeData($param)
+    {
+      
+        $obj = new StdClass;
+        $string = new StringsUtil;
+        
+        if(strlen($param['data_atividade_inicial']) == 10 && strlen($param['data_atividade_final']) == 10)
+        {
+        
+            if(strtotime($string->formatDate($param['data_atividade_final'])) < strtotime($string->formatDate($param['data_atividade_inicial'])))
+            {
+    	        $obj->data_atividade_final = ''; 
+    	        new TMessage('error', 'Data de atividade final menor que data de atividade inicial'); 
+            }
+        
+        }
+        
+        TForm::sendData('form_search_Atividade', $obj, FALSE, FALSE);
+       
+    }
+    
     /**
      * method onInlineEdit()
      * Inline record editing
@@ -216,26 +255,34 @@ class AtividadeList extends TPage
     {
         // get the search form data
         $data = $this->form->getData();
-        $string = new StringsUtil;
-        
+       
         // clear session filters
         TSession::setValue('AtividadeList_filter_id',   NULL);
-        TSession::setValue('AtividadeList_filter_data_atividade',   NULL);
+        TSession::setValue('AtividadeList_filter_data_atividade_inicial',   NULL);
+        TSession::setValue('AtividadeList_filter_data_atividade_final',   NULL);
         TSession::setValue('AtividadeList_filter_solicitante_id',   NULL);
         TSession::setValue('AtividadeList_filter_colaborador_id',   NULL);
         TSession::setValue('AtividadeList_filter_tipo_atividade_id',   NULL);
         TSession::setValue('AtividadeList_filter_ticket_id',   NULL);
+        TSession::setValue('AtividadeList_filter_pesquisa_master',   NULL);
         
         if (isset($data->id) AND ($data->id)) {
             $filter = new TFilter('id', '=', "$data->id"); // create the filter
             TSession::setValue('AtividadeList_filter_id',   $filter); // stores the filter in the session
         }
         
-        if (isset($data->data_atividade) AND ($data->data_atividade)) {
-            $data->data_atividade = $string->formatDate($data->data_atividade);
-            $filter = new TFilter('data_atividade', '>=', "$data->data_atividade"); // create the filter
-            $data->data_atividade = $string->formatDateBR($data->data_atividade);
-            TSession::setValue('AtividadeList_filter_data_atividade',   $filter); // stores the filter in the session
+        if (isset($data->data_atividade_inicial) AND ($data->data_atividade_inicial)) {
+            $data->data_atividade_inicial = $this->string->formatDate($data->data_atividade_inicial);
+            $filter = new TFilter('data_atividade', '>=', "$data->data_atividade_inicial"); // create the filter
+            $data->data_atividade_inicial = $this->string->formatDateBR($data->data_atividade_inicial);
+            TSession::setValue('AtividadeList_filter_data_atividade_inicial',   $filter); // stores the filter in the session
+        }
+        
+        if (isset($data->data_atividade_final) AND ($data->data_atividade_final)) {
+            $data->data_atividade_final = $this->string->formatDate($data->data_atividade_final);
+            $filter = new TFilter('data_atividade', '<=', "$data->data_atividade_final"); // create the filter
+            $data->data_atividade_final = $this->string->formatDateBR($data->data_atividade_final);
+            TSession::setValue('AtividadeList_filter_data_atividade_final',   $filter); // stores the filter in the session
         }
         
         if (isset($data->solicitante_id) AND ($data->solicitante_id)) {
@@ -278,6 +325,12 @@ class AtividadeList extends TPage
             $data->ticket_id = $arraySwap;
             
         }
+                
+        if (isset($data->pesquisa_master) AND ($data->pesquisa_master)) {
+            
+            TSession::setValue('AtividadeList_filter_pesquisa_master', $data->pesquisa_master); // stores the filter in the session
+            
+        }
         
         // fill the form with data again
         $this->form->setData($data);
@@ -289,6 +342,13 @@ class AtividadeList extends TPage
         $param['offset']    =0;
         $param['first_page']=1;
         $this->onReload($param);
+    }
+    
+    public static function onTotalAtividades($param)
+    {
+        $obj = new StdClass;
+        $obj->total_atividades         = $param;  
+        TForm::sendData('form_search_Atividade', $obj, FALSE, FALSE);
     }
     
     /**
@@ -308,6 +368,12 @@ class AtividadeList extends TPage
             $limit = 15;
             // creates a criteria
             $criteria = new TCriteria;
+            $criHoras = new TCriteria;
+            $criteria2 = new TCriteria;
+            $criHoras2 = new TCriteria;
+            
+            $calculaHoras       = null;
+            $pesquisaNormal     = null;
             
             $newparam = $param; // define new parameters
             if (isset($newparam['order']) AND $newparam['order'] == 'ticket->titulo')
@@ -340,8 +406,8 @@ class AtividadeList extends TPage
             
             if($newparam['order'] == 'data_atividade')
             {
-                $newparam['order'] = 'data_atividade desc, id ';
-                $newparam['direction'] = 'desc';
+                $newparam['order'] = 'data_atividade asc, id ';
+                $newparam['direction'] = 'asc';
             }
             
             $criteria->setProperties($newparam); // order, offset
@@ -349,30 +415,143 @@ class AtividadeList extends TPage
             
             if (TSession::getValue('AtividadeList_filter_id')) {
                 $criteria->add(TSession::getValue('AtividadeList_filter_id')); // add the session filter
+                $criHoras->add(TSession::getValue('AtividadeList_filter_id')); // add the session filter
+                $calculaHoras     = true;
+                $pesquisaNormal   = true;
             }
             
-            if (TSession::getValue('AtividadeList_filter_data_atividade')) {
-                $criteria->add(TSession::getValue('AtividadeList_filter_data_atividade')); // add the session filter
+            if (TSession::getValue('AtividadeList_filter_data_atividade_inicial')) {
+                $criteria->add(TSession::getValue('AtividadeList_filter_data_atividade_inicial')); // add the session filter
+                $criHoras->add(TSession::getValue('AtividadeList_filter_data_atividade_inicial')); // add the session filter
+                $calculaHoras     = true;
+                $pesquisaNormal   = true;
+            }
+                        
+            if (TSession::getValue('AtividadeList_filter_data_atividade_final')) {
+                $criteria->add(TSession::getValue('AtividadeList_filter_data_atividade_final')); // add the session filter
+                $criHoras->add(TSession::getValue('AtividadeList_filter_data_atividade_final')); // add the session filter
+                $calculaHoras     = true;
+                $pesquisaNormal   = true;
             }
             
             if (TSession::getValue('AtividadeList_filter_solicitante_id')) {
                 $criteria->add(TSession::getValue('AtividadeList_filter_solicitante_id')); // add the session filter
+                $criHoras->add(TSession::getValue('AtividadeList_filter_solicitante_id')); // add the session filter
+                $calculaHoras     = true;
+                $pesquisaNormal   = true;
             }
             
             if (TSession::getValue('AtividadeList_filter_colaborador_id')) {
                 $criteria->add(TSession::getValue('AtividadeList_filter_colaborador_id')); // add the session filter
+                $criHoras->add(TSession::getValue('AtividadeList_filter_colaborador_id')); // add the session filter
+                $calculaHoras     = true;
+                $pesquisaNormal   = true;
             }
             
             if (TSession::getValue('AtividadeList_filter_tipo_atividade_id')) {
                 $criteria->add(TSession::getValue('AtividadeList_filter_tipo_atividade_id')); // add the session filter
+                $criHoras->add(TSession::getValue('AtividadeList_filter_tipo_atividade_id')); // add the session filter
+                $calculaHoras     = true;
+                $pesquisaNormal   = true;
             }
             
             if (TSession::getValue('AtividadeList_filter_ticket_id')) {
                 $criteria->add(TSession::getValue('AtividadeList_filter_ticket_id')); // add the session filter
+                $criHoras->add(TSession::getValue('AtividadeList_filter_ticket_id')); // add the session filter
+                $calculaHoras     = true;
+                $pesquisaNormal   = true;
+            }
+            
+            if (TSession::getValue('AtividadeList_filter_pesquisa_master')) {
+            
+               try
+                {
+                   TTransaction::open('atividade');
+                    
+                   $pesquisa_master = TSession::getValue('AtividadeList_filter_pesquisa_master');
+                    
+                   $repo = new TRepository('Ticket');
+                   $tickets = $repo->where('titulo', 'ilike', "%$pesquisa_master%")->load();
+                    
+                   $clausula[] = '0';
+                    
+                   foreach ($tickets as $ticket)
+                   {
+                       $clausula[] = $ticket->id;
+                   }
+                    
+                   TTransaction::close();
+                }
+                catch(Exception $e)
+                {
+                   new TMessage('error', $e->getMessage());
+                }
+                
+                $criteria2->add(new TFilter('ticket_id', 'IN', ($clausula)), TExpression::OR_OPERATOR);
+                $criteria2->add(new TFilter('descricao', 'ilike', "%$pesquisa_master%"), TExpression::OR_OPERATOR);            
+
+                $criHoras2->add(new TFilter('ticket_id', 'IN', ($clausula)), TExpression::OR_OPERATOR);
+                $criHoras2->add(new TFilter('descricao', 'ilike', "%$pesquisa_master%"), TExpression::OR_OPERATOR);            
+            
+                $calculaHoras = true;
+            }
+            
+            if(TSession::getValue('AtividadeList_filter_pesquisa_master'))
+            {
+                
+                if(!$pesquisaNormal)
+                {
+                    $criteriaFinal = $criteria2;
+                    $criteriaHorasFinal = $criHoras2;
+                    $criteriaFinal->setProperties($newparam); // order, offset
+                    $criteriaFinal->setProperty('limit', $limit);
+                }
+                else
+                {
+                    $criteriaFinal = new TCriteria;
+                    $criteriaFinal->add($criteria);                
+                    $criteriaFinal->add($criteria2);
+                    $criteriaFinal->setProperties($newparam); // order, offset
+                    $criteriaFinal->setProperty('limit', $limit);
+                    
+                    $criteriaHorasFinal = new TCriteria;
+                    $criteriaHorasFinal->add($criHoras);
+                    $criteriaHorasFinal->add($criHoras2);
+                }
+                
+            }
+            else
+            {
+                $criteriaFinal = $criteria;
+                $criteriaHorasFinal = $criHoras;
+            }
+             
+            if($calculaHoras)
+            {
+            
+                $repo = new TRepository('Atividade');
+                $horas = $repo->load($criteriaHorasFinal, FALSE);
+                
+                $totalHoras = null;
+                
+                if($horas){
+                    foreach($horas as $hora){
+                        
+                        $HoraEntrada = new DateTime($hora->hora_inicio);
+                        $HoraSaida   = new DateTime($hora->hora_fim);
+                        $diferenca   = $HoraSaida->diff($HoraEntrada)->format('%H:%I:%S');
+                        
+                        $totalHoras += $this->string->time_to_sec($diferenca);
+    
+                    }
+                }
+                
+                $this->onTotalAtividades(substr($this->string->sec_to_time($totalHoras), 0, -3));
+                
             }
             
             // load the objects according to criteria
-            $objects = $repository->load($criteria, FALSE);
+            $objects = $repository->load($criteriaFinal, FALSE);
             
             $this->datagrid->clear();
             
@@ -394,8 +573,8 @@ class AtividadeList extends TPage
              }
             
             // reset the criteria for record count
-            $criteria->resetProperties();
-            $count= $repository->count($criteria);
+            $criteriaFinal->resetProperties();
+            $count= $repository->count($criteriaFinal);
             
             $this->pageNavigation->setCount($count); // count of records
             $this->pageNavigation->setProperties($param); // order, page
@@ -471,12 +650,14 @@ class AtividadeList extends TPage
     {
          
         // clear session filters
-        TSession::setValue('AtividadeList_filter_id',                   '');
-        TSession::setValue('AtividadeList_filter_data_atividade',       '');
-        TSession::setValue('AtividadeList_filter_solicitante_id',       '');
-        TSession::setValue('AtividadeList_filter_colaborador_id',       '');
-        TSession::setValue('AtividadeList_filter_tipo_atividade_id',    '');
-        TSession::setValue('AtividadeList_filter_ticket_id',            '');
+        TSession::setValue('AtividadeList_filter_id',                           '');
+        TSession::setValue('AtividadeList_filter_data_atividade_inicial',       '');
+        TSession::setValue('AtividadeList_filter_data_atividade_final',         '');
+        TSession::setValue('AtividadeList_filter_solicitante_id',               '');
+        TSession::setValue('AtividadeList_filter_colaborador_id',               '');
+        TSession::setValue('AtividadeList_filter_tipo_atividade_id',            '');
+        TSession::setValue('AtividadeList_filter_ticket_id',                    '');
+        TSession::setValue('AtividadeList_filter_pesquisa_master',              '');
          
         $this->form->clear();
 

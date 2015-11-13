@@ -132,7 +132,7 @@ class Ponto extends TRecord
     {
 
         $conn = TTransaction::get();
-        $result = $conn->query("select sum((hora_fim - hora_inicio)) as intervalo from atividade where data_atividade = '{$data}' and colaborador_id = {$user} and ticket_id <> 328");
+        $result = $conn->query("select sum((hora_fim - hora_inicio)) as intervalo from atividade where data_atividade = '{$data}' and colaborador_id = {$user} and ticket_id not in (328, 514)");
         
         foreach ($result as $row)
         {
