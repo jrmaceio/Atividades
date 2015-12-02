@@ -246,8 +246,7 @@ class TSortList extends TField implements AdiantiWidgetInterface
                     throw new Exception(AdiantiCoreTranslator::translate('You must pass the ^1 (^2) as a parameter to ^3', __CLASS__, $this->name, 'TForm::setFields()') );
                 }            
                 $string_action = $this->changeAction->serialize(FALSE);
-                $change_action = "function() { serialform=(\$('#{$this->formName}').serialize());
-                                             __adianti_ajax_lookup('$string_action&'+serialform, this); }";
+                $change_action = "function() { __adianti_post_lookup('{$this->formName}', '{$string_action}', this); }";
             }
             
             $connect = 'false';

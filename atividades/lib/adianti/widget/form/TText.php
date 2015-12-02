@@ -91,12 +91,14 @@ class TText extends TField implements AdiantiWidgetInterface
         $this->tag-> name  = $this->name;   // tag name
         if ($this->size)
         {
-            $this->setProperty('style', "width:{$this->size}px", FALSE); //aggregate style info
+            $size = (strstr($this->size, '%') !== FALSE) ? $this->size : "{$this->size}px";
+            $this->setProperty('style', "width:{$size};", FALSE); //aggregate style info
         }
         
         if ($this->height)
         {
-            $this->setProperty('style', "height:{$this->height}px", FALSE); //aggregate style info
+            $height = (strstr($this->height, '%') !== FALSE) ? $this->height : "{$this->height}px";
+            $this->setProperty('style', "height:{$height}", FALSE); //aggregate style info
         }
         
         // check if the field is not editable
@@ -104,7 +106,7 @@ class TText extends TField implements AdiantiWidgetInterface
         {
             // make the widget read-only
             $this->tag-> readonly = "1";
-            $this->tag->{'class'} = 'tfield_disabled'; // CSS
+            $this->tag->{'class'} == 'tfield' ? 'tfield_disabled' : $this->tag->{'class'} . ' tfield_disabled'; // CSS
         }
         
         if (isset($this->exitAction))
@@ -114,8 +116,7 @@ class TText extends TField implements AdiantiWidgetInterface
                 throw new Exception(AdiantiCoreTranslator::translate('You must pass the ^1 (^2) as a parameter to ^3', __CLASS__, $this->name, 'TForm::setFields()') );
             }
             $string_action = $this->exitAction->serialize(FALSE);
-            $this->setProperty('onBlur', "serialform=(\$('#{$this->formName}').serialize());
-                                          __adianti_ajax_lookup('$string_action&'+serialform, this)");
+            $this->setProperty('onBlur', "__adianti_post_lookup('{$this->formName}', '{$string_action}', this)");
         }
         
         // add the content to the textarea

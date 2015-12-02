@@ -182,8 +182,7 @@ class TEntry extends TField implements AdiantiWidgetInterface
                 }
                 $string_action = $this->exitAction->serialize(FALSE);
 
-                $this->setProperty('exitaction', "serialform=(\$('#{$this->formName}').serialize());
-                                                 __adianti_ajax_lookup('$string_action&'+serialform, document.{$this->formName}.{$this->name})", FALSE);
+                $this->setProperty('exitaction', "__adianti_post_lookup('{$this->formName}', '{$string_action}', document.{$this->formName}.{$this->name})");
                 $this->setProperty('onBlur', $this->getProperty('exitaction'), FALSE);
             }
             

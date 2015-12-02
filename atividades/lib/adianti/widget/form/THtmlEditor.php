@@ -20,6 +20,7 @@ class THtmlEditor extends TField implements AdiantiWidgetInterface
 {
     protected $id;
     protected $size;
+    protected $formName;
     private   $height;
     
     /**
@@ -32,7 +33,7 @@ class THtmlEditor extends TField implements AdiantiWidgetInterface
         $this->id = 'THtmlEditor_'.mt_rand(1000000000, 1999999999);
         
         // creates a tag
-        $this->tag = new TElement('div');
+        $this->tag = new TElement('textarea');
     }
     
     /**
@@ -84,36 +85,20 @@ class THtmlEditor extends TField implements AdiantiWidgetInterface
      */
     public function show()
     {
+        $this->tag->{'id'} = $this->id;
+        $this->tag->{'class'} = 'thtmleditor';       // CSS
+        $this->tag-> name  = $this->name;   // tag name
+        
+        // add the content to the textarea
+        $this->tag->add(htmlspecialchars($this->value));
+        TScript::create(" thtmleditor_start( '{$this->tag->{'id'}}', '{$this->size}', '{$this->height}' ); ");
+        
         // check if the field is not editable
-        if (parent::getEditable())
+        if (!parent::getEditable())
         {
-            $tag = new TElement('textarea');
-            $tag->{'id'} = $this->id;
-            $tag->{'class'} = 'thtmleditor';       // CSS
-            $tag-> name  = $this->name;   // tag name
-            $this->setProperty('style', "width:{$this->size}px", FALSE); //aggregate style info
-            $this->tag->add($tag);
-            if ($this->height)
-            {
-                $tag-> style .=  "height:{$this->height}px";
-            }
-            
-            // add the content to the textarea
-            $tag->add(htmlspecialchars($this->value));
-            TScript::create(" thtmleditor_start( '{$tag->{'id'}}', '{$this->size}', '{$this->height}' ); ");
+            TScript::create( " thtmleditor_disable_field('{$this->formName}', '{$this->name}'); " );
         }
-        else
-        {
-            $this->tag-> style = "width:{$this->size}px;";
-            $this->tag-> style.= "height:{$this->height}px;";
-            $this->tag-> style.= "background-color:#FFFFFF;";
-            $this->tag-> style.= "border: 1px solid #000000;";
-            $this->tag-> style.= "padding: 5px;";
-            $this->tag-> style.= "overflow: auto;";
-            
-            // add the content to the textarea
-            $this->tag->add($this->value);
-        }
+        
         // show the tag
         $this->tag->show();
     }

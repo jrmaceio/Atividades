@@ -70,6 +70,18 @@ class TStyle
     }
     
     /**
+     * Executed whenever a property is read
+     * @param  $name    = property's name
+     */
+    public function __get($name)
+    {
+        // replaces "_" by "-" in the property's name
+        $name = str_replace('_', '-', $name);
+        
+        return $this->properties[$name];
+    }
+    
+    /**
      * Return if the style has any content
      */
     public function hasContent()

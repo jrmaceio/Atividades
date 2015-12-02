@@ -50,7 +50,14 @@ class TPassword extends TField implements AdiantiWidgetInterface
         $this->tag-> name  =  $this->name;   // tag name
         $this->tag-> value =  $this->value;  // tag value
         $this->tag-> type  =  'password';    // input type
-        $this->setProperty('style', "width:{$this->size}px", FALSE); //aggregate style info
+        if (strstr($this->size, '%') !== FALSE)
+        {
+            $this->setProperty('style', "width:{$this->size};", FALSE); //aggregate style info
+        }
+        else
+        {
+            $this->setProperty('style', "width:{$this->size}px;", FALSE); //aggregate style info
+        }
         
         // verify if the field is not editable
         if (parent::getEditable())
@@ -63,8 +70,7 @@ class TPassword extends TField implements AdiantiWidgetInterface
                 }
                 
                 $string_action = $this->exitAction->serialize(FALSE);
-                $this->setProperty('onBlur', "serialform=(\$('#{$this->formName}').serialize());
-                                              __adianti_ajax_lookup('$string_action&'+serialform, this)");
+                $this->setProperty('onBlur', "__adianti_post_lookup('{$this->formName}', '{$string_action}', this)");
             }
         }
         else

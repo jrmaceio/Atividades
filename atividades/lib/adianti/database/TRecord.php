@@ -656,6 +656,11 @@ abstract class TRecord
     {
         $class = get_class($this);
         
+        if (method_exists($this, 'onBeforeDelete'))
+        {
+            $this->onBeforeDelete( (object) $this->toArray() );
+        }
+        
         // discover the primary key name
         $pk = $this->getPrimaryKey();
         // if the user has not passed the ID, take the object ID
@@ -688,8 +693,6 @@ abstract class TRecord
                 $result = $conn-> query($sql->getInstruction());
             }
             
-            unset($this->data);
-            
             if ( $cache = $this->getCacheControl() )
             {
                 $record_key = $class . '['. $id . ']';
@@ -698,6 +701,13 @@ abstract class TRecord
                     TTransaction::log($record_key . ' deleted from cache');
                 }
             }
+            
+            if (method_exists($this, 'onAfterDelete'))
+            {
+                $this->onAfterDelete( (object) $this->toArray() );
+            }
+            
+            unset($this->data);
             
             // return the result of the exec() method
             return $result;
@@ -817,15 +827,19 @@ abstract class TRecord
      * @param $id Primary key of parent object
      * @returns Array of Active Records
      */
-    public function loadComposite($composite_class, $foreign_key, $id = NULL)
+    public function loadComposite($composite_class, $foreign_key, $id = NULL, $order = NULL)
     {
         // discover the primary key name
         $pk = $this->getPrimaryKey();
         // if the user has not passed the ID, take the object ID
         $id = $id ? $id : $this->$pk;
-        
+
         $criteria = new TCriteria;
         $criteria->add(new TFilter($foreign_key, '=', $id));
+        if ($order)
+        {
+            $criteria->setProperty('order', $order);
+        }
         
         $repository = new TRepository($composite_class);
         $objects = $repository->load($criteria);
@@ -836,14 +850,15 @@ abstract class TRecord
      * Load composite objects. Shortcut for loadComposite
      * @param $composite_class Active Record Class for composite objects
      * @param $foreign_key Foreign key in composite objects
-     * @param $id Primary key of parent object
+     * @param $local_id Primary key of parent object
      * @returns Array of Active Records
      */
-    public function hasMany($composite_class, $foreign_key = NULL, $id = NULL)
+    public function hasMany($composite_class, $foreign_key = NULL, $local_id = NULL, $order = NULL)
     {
         $class = get_class($this);
         $foreign_key = isset($foreign_key) ? $foreign_key : $this->underscoreFromCamelCase($class) . '_id';
-        return $this->loadComposite($composite_class, $foreign_key, $id);
+        $local_id = $local_id ? $local_id : $this->getPrimaryKey();
+        return $this->loadComposite($composite_class, $foreign_key, $this->$local_id, $order);
     }
     
     /**
@@ -1025,6 +1040,19 @@ abstract class TRecord
         $class = get_called_class(); // get the Active Record class name
         $repository = new TRepository( $class ); // create the repository
         return $repository->orWhere($variable, $operator, $value);
+    }
+    
+    /**
+     * Creates an ordered repository
+     * @param  $order = Order column
+     * @param  $direction = Order direction (asc, desc)
+     * @returns the ordered TRepository object
+     */
+    public static function orderBy($order, $direction = 'asc')
+    {
+        $class = get_called_class(); // get the Active Record class name
+        $repository = new TRepository( $class ); // create the repository
+        return $repository->orderBy( $order, $direction );
     }
     
     private function underscoreFromCamelCase($string)

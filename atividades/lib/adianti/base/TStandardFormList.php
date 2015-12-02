@@ -14,5 +14,16 @@ use Adianti\Control\TPage;
  */
 class TStandardFormList extends TPage
 {
+    protected $form;
+    protected $datagrid;
+    protected $pageNavigation;
+    protected $filterField;
+    protected $loaded;
+    protected $limit;
+    protected $order;
+    protected $direction;
+    protected $criteria;
+    protected $transformCallback;
+    
     use AdiantiStandardFormListTrait;
 }

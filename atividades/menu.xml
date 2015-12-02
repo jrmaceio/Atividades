@@ -18,6 +18,14 @@
                   <icon>fa:user fa-code</icon>
                   <action>PHPInfoView</action>
               </menuitem>
+               <menuitem label='SQL Panel'>
+                  <icon>fa:table fa-fw</icon>
+                  <action>SystemSQLPanel</action>
+              </menuitem>
+              <menuitem label='PHP Info'>
+                  <icon>fa:code fa-fw</icon>
+                  <action>SystemPHPInfoView</action>
+              </menuitem>
         </menu>
     </menuitem>
     
@@ -54,6 +62,24 @@
         </menu>
     </menuitem>
     
+    <menuitem label='Logs'>
+        <icon>fa:desktop fa-fw</icon>
+        <menu>
+              <menuitem label='Log de acessos'>
+                  <icon>fa:key fa-fw</icon>
+                  <action>RegistroLoginReport</action>
+              </menuitem>
+              <menuitem label='Change Log'>
+                  <icon>fa:film fa-fw</icon>
+                  <action>SystemChangeLogView</action>
+              </menuitem>
+              <menuitem label='SQL Log'>
+                  <icon>fa:database fa-fw</icon>
+                  <action>SystemSqlLogList</action>
+              </menuitem>
+        </menu>
+    </menuitem>
+    
     
    <menuitem label='Relatorios'>
         <menu>
@@ -65,18 +91,14 @@
                 <icon>fa:fa fa-tachometer fa-fw</icon>
                 <action>TicketReport</action>
             </menuitem>
+            <menuitem label='Indicador por Periodo'>
+                <icon>fa:fa fa-line-chart fa-fw</icon>
+                <action>AtividadeClienteReport</action>
+            </menuitem> 
             <menuitem label='Indicador Produtividade'>
                 <icon>fa:fa fa-users fa-fw</icon>
                 <action>PontoReport</action>
-            </menuitem>
-            <menuitem label='Log de acessos'>
-                <icon>fa:user fa-film</icon>
-                <action>RegistroLoginReport</action>
-            </menuitem>    
-            <menuitem label='Log Alterações Ticket'>
-                <icon>fa:user fa-film</icon>
-                <action>SystemChangeLogView</action>
-            </menuitem>
+            </menuitem>   
         </menu>
     </menuitem>
     

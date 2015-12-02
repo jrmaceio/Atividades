@@ -30,7 +30,7 @@ class THoraSaidaPontoValidator extends TFieldValidator
                 
                 if($HoraAtividade > $HoraSaida)
                 {
-                    throw new Exception("Horário inválido");
+                    throw new Exception("Horário de saída inferior a hora final da ultima atividade");
                 }
             
             }

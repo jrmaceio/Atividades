@@ -34,6 +34,7 @@ class TMultiField extends TField implements AdiantiWidgetInterface
     private $width;
     private $className;
     private $orientation;
+    protected $name;
     protected $formName;
     
     /**
@@ -326,7 +327,7 @@ class TMultiField extends TField implements AdiantiWidgetInterface
             $add = new TButton("{$this->name}btnStore");
             $add->setLabel(AdiantiCoreTranslator::translate('Register'));
             $add->setImage('fa:angle-double-down');
-            $add->addFunction("multifields['$this->name'].addRowFromFormFields()");
+            $add->addFunction("multifields['{$this->name}'].addRowFromFormFields()");
             
             $del = new TButton("{$this->name}btnDelete");
             $del->setLabel(AdiantiCoreTranslator::translate('Delete'));

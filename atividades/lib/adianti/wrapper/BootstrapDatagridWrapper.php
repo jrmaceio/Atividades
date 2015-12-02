@@ -9,6 +9,8 @@ use Adianti\Widget\Datagrid\TDataGrid;
  * @author     Pablo Dall'Oglio
  * @copyright  Copyright (c) 2006-2014 Adianti Solutions Ltd. (http://www.adianti.com.br)
  * @license    http://www.adianti.com.br/framework-license
+ * @wrapper    TDataGrid
+ * @wrapper    TQuickGrid
  */
 class BootstrapDatagridWrapper
 {
@@ -32,11 +34,19 @@ class BootstrapDatagridWrapper
     }
     
     /**
+     * Redirect calls to decorated object
+     */
+    public function __set($property, $value)
+    {
+        $this->decorated->$property = $value;
+    }
+    
+    /**
      * Shows the decorated datagrid
      */
     public function show()
     {
-        $this->decorated->{'style'} = 'border-collapse:collapse';
+        $this->decorated->{'style'} .= ';border-collapse:collapse';
         
         $sessions = $this->decorated->getChildren();
         if ($sessions)

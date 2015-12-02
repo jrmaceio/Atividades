@@ -15,19 +15,6 @@ use Exception;
 
 trait AdiantiStandardListTrait
 {
-    protected $form;
-    protected $datagrid;
-    protected $pageNavigation;
-    protected $filterFields;
-    protected $formFilters;
-    protected $loaded;
-    protected $limit;
-    protected $operators;
-    protected $order;
-    protected $direction;
-    protected $criteria;
-    protected $transformCallback;
-    
     use AdiantiStandardControlTrait;
     
     /**
@@ -102,7 +89,6 @@ trait AdiantiStandardListTrait
     }
     
     /**
-     * method onInlineEdit()
      * Inline record editing
      * @param $param Array containing:
      *              key: object ID value
@@ -142,15 +128,14 @@ trait AdiantiStandardListTrait
         catch (Exception $e) // in case of exception
         {
             // shows the exception error message
-            new TMessage('error', '<b>Error</b> ' . $e->getMessage());
+            new TMessage('error', $e->getMessage());
             // undo all pending operations
             TTransaction::rollback();
         }
     }
     
     /**
-     * method onSearch()
-     * Register the filter in the session when the user performs a search
+     * Register the filter in the session
      */
     public function onSearch()
     {
@@ -159,10 +144,10 @@ trait AdiantiStandardListTrait
         
         if ($this->formFilters)
         {
-            foreach ($this->formFilters as $filterKey => $filterField)
+            foreach ($this->formFilters as $filterKey => $formFilter)
             {
-                $operator = isset($this->operators[$filterKey]) ? $this->operators[$filterKey] : 'like';
-                $formFilter = isset($this->formFilters[$filterKey]) ? $this->formFilters[$filterKey] : $filterField;
+                $operator    = isset($this->operators[$filterKey]) ? $this->operators[$filterKey] : 'like';
+                $filterField = isset($this->filterFields[$filterKey]) ? $this->filterFields[$filterKey] : $formFilter;
                 
                 // check if the user has filled the form
                 if (isset($data->{$formFilter}) AND $data->{$formFilter})
@@ -217,7 +202,7 @@ trait AdiantiStandardListTrait
             $repository = new TRepository($this->activeRecord);
             $limit = isset($this->limit) ? ( $this->limit > 0 ? $this->limit : NULL) : 10;
             // creates a criteria
-            $criteria = isset($this->criteria) ? $this->criteria : new TCriteria;
+            $criteria = isset($this->criteria) ? clone $this->criteria : new TCriteria;
             if ($this->order)
             {
                 $criteria->setProperty('order',     $this->order);
@@ -243,7 +228,7 @@ trait AdiantiStandardListTrait
             
             if (is_callable($this->transformCallback))
             {
-                call_user_func($this->transformCallback, $objects);
+                call_user_func($this->transformCallback, $objects, $param);
             }
             
             $this->datagrid->clear();
@@ -275,16 +260,14 @@ trait AdiantiStandardListTrait
         catch (Exception $e) // in case of exception
         {
             // shows the exception error message
-            new TMessage('error', '<b>Error</b> ' . $e->getMessage());
+            new TMessage('error', $e->getMessage());
             // undo all pending operations
             TTransaction::rollback();
         }
     }
     
     /**
-     * method onDelete()
-     * executed whenever the user clicks at the delete button
-     * Ask if the user really wants to delete the record
+     * Ask before deletion
      */
     public function onDelete($param)
     {
@@ -297,7 +280,6 @@ trait AdiantiStandardListTrait
     }
     
     /**
-     * method Delete()
      * Delete a record
      */
     public function Delete($param)
@@ -312,7 +294,7 @@ trait AdiantiStandardListTrait
             $class = $this->activeRecord;
             
             // instantiates object
-            $object = new $class($key);
+            $object = new $class($key, FALSE);
             
             // deletes the object from the database
             $object->delete();
@@ -328,8 +310,78 @@ trait AdiantiStandardListTrait
         catch (Exception $e) // in case of exception
         {
             // shows the exception error message
-            new TMessage('error', '<b>Error</b> ' . $e->getMessage());
+            new TMessage('error', $e->getMessage());
             // undo all pending operations
+            TTransaction::rollback();
+        }
+    }
+    
+    /**
+     * Ask before delete record collection
+     */
+    public function onDeleteCollection( $param )
+    {
+        $data = $this->formgrid->getData(); // get selected records from datagrid
+        $this->formgrid->setData($data); // keep form filled
+        
+        if ($data)
+        {
+            $selected = array();
+            
+            // get the record id's
+            foreach ($data as $index => $check)
+            {
+                if ($check == 'on')
+                {
+                    $selected[] = substr($index,5);
+                }
+            }
+            
+            if ($selected)
+            {
+                // encode record id's as json
+                $param['selected'] = json_encode($selected);
+                
+                // define the delete action
+                $action = new TAction(array($this, 'deleteCollection'));
+                $action->setParameters($param); // pass the key parameter ahead
+                
+                // shows a dialog to the user
+                new TQuestion(AdiantiCoreTranslator::translate('Do you really want to delete ?'), $action);
+            }
+        }
+    }
+    
+    /**
+     * method deleteCollection()
+     * Delete many records
+     */
+    public function deleteCollection($param)
+    {
+        // decode json with record id's
+        $selected = json_decode($param['selected']);
+        
+        try
+        {
+            TTransaction::open($this->database);
+            if ($selected)
+            {
+                // delete each record from collection
+                foreach ($selected as $id)
+                {
+                    $class = $this->activeRecord;
+                    $object = new $class;
+                    $object->delete( $id );
+                }
+                $posAction = new TAction(array($this, 'onReload'));
+                $posAction->setParameters( $param );
+                new TMessage('info', AdiantiCoreTranslator::translate('Records deleted'), $posAction);
+            }
+            TTransaction::close();
+        }
+        catch (Exception $e)
+        {
+            new TMessage('error', $e->getMessage());
             TTransaction::rollback();
         }
     }

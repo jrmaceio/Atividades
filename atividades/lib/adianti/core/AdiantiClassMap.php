@@ -96,6 +96,7 @@ class AdiantiClassMap
         $classPath['TEntry']                     = 'lib/adianti/widget/form/TEntry.php';
         $classPath['TField']                     = 'lib/adianti/widget/form/TField.php';
         $classPath['TFile']                      = 'lib/adianti/widget/form/TFile.php';
+        $classPath['TMultiFile']                 = 'lib/adianti/widget/form/TMultiFile.php';
         $classPath['TForm']                      = 'lib/adianti/widget/form/TForm.php';
         $classPath['THidden']                    = 'lib/adianti/widget/form/THidden.php';
         $classPath['THtmlEditor']                = 'lib/adianti/widget/form/THtmlEditor.php';
@@ -116,6 +117,7 @@ class AdiantiClassMap
         $classPath['TMenuItem']                  = 'lib/adianti/widget/menu/TMenuItem.php';
         $classPath['THtmlRenderer']              = 'lib/adianti/widget/template/THtmlRenderer.php';
         $classPath['TBreadCrumb']                = 'lib/adianti/widget/util/TBreadCrumb.php';
+        $classPath['TProgressBar']               = 'lib/adianti/widget/util/TProgressBar.php';
         $classPath['TCalendar']                  = 'lib/adianti/widget/util/TCalendar.php';
         $classPath['TDropDown']                  = 'lib/adianti/widget/util/TDropDown.php';
         $classPath['TExceptionView']             = 'lib/adianti/widget/util/TExceptionView.php';

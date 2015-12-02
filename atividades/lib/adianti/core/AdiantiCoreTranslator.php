@@ -9,6 +9,7 @@ namespace Adianti\Core;
  * @author     Pablo Dall'Oglio
  * @copyright  Copyright (c) 2006-2014 Adianti Solutions Ltd. (http://www.adianti.com.br)
  * @license    http://www.adianti.com.br/framework-license
+ * @alias      TAdiantiCoreTranslator
  */
 class AdiantiCoreTranslator
 {
@@ -27,6 +28,7 @@ class AdiantiCoreTranslator
         $this->messages['en'][] = 'Record saved';
         $this->messages['en'][] = 'Do you really want to delete ?';
         $this->messages['en'][] = 'Record deleted';
+        $this->messages['en'][] = 'Records deleted';
         $this->messages['en'][] = 'Function';
         $this->messages['en'][] = 'Table';
         $this->messages['en'][] = 'Tool';
@@ -35,6 +37,7 @@ class AdiantiCoreTranslator
         $this->messages['en'][] = 'Save';
         $this->messages['en'][] = 'List';
         $this->messages['en'][] = 'Delete';
+        $this->messages['en'][] = 'Delete selected';
         $this->messages['en'][] = 'Edit';
         $this->messages['en'][] = 'Cancel';
         $this->messages['en'][] = 'Yes';
@@ -54,7 +57,7 @@ class AdiantiCoreTranslator
         $this->messages['en'][] = 'Today';
         $this->messages['en'][] = 'Close';
         $this->messages['en'][] = 'Field for action ^1 not defined';
-        $this->messages['en'][] = 'Field ^1 not exists';
+        $this->messages['en'][] = 'Field ^1 not exists or contains NULL value';
         $this->messages['en'][] = 'Use the ^1 method';
         $this->messages['en'][] = 'Form with no fields';
         $this->messages['en'][] = 'E-mail not sent';
@@ -98,13 +101,16 @@ class AdiantiCoreTranslator
         $this->messages['en'][] = 'Search record';
         $this->messages['en'][] = 'Field';
         $this->messages['en'][] = 'Record updated';
+        $this->messages['en'][] = 'Records updated';
         $this->messages['en'][] = 'Input';
         $this->messages['en'][] = 'Class ^1 not found';
         $this->messages['en'][] = 'Method ^1 not found';
         $this->messages['en'][] = 'Check the class name or the file name';
         $this->messages['en'][] = 'Clear';
+        $this->messages['en'][] = 'Select';
         $this->messages['en'][] = 'You must define the field for the action (^1)';
         $this->messages['en'][] = 'The section (^1) was not closed properly';
+        $this->messages['en'][] = 'The method (^1) just accept values of type ^2 between ^3 and ^4';
         
         $this->messages['pt'][] = 'Carregando';
         $this->messages['pt'][] = 'Arquivo não encontrado';
@@ -113,6 +119,7 @@ class AdiantiCoreTranslator
         $this->messages['pt'][] = 'Registro salvo';
         $this->messages['pt'][] = 'Deseja realmente excluir ?';
         $this->messages['pt'][] = 'Registro excluído';
+        $this->messages['pt'][] = 'Registros excluídos';
         $this->messages['pt'][] = 'Função';
         $this->messages['pt'][] = 'Tabela';
         $this->messages['pt'][] = 'Ferramenta';
@@ -121,6 +128,7 @@ class AdiantiCoreTranslator
         $this->messages['pt'][] = 'Salvar';
         $this->messages['pt'][] = 'Listar';
         $this->messages['pt'][] = 'Excluir';
+        $this->messages['pt'][] = 'Excluir selecionados';
         $this->messages['pt'][] = 'Editar';
         $this->messages['pt'][] = 'Cancelar';
         $this->messages['pt'][] = 'Sim';
@@ -140,7 +148,7 @@ class AdiantiCoreTranslator
         $this->messages['pt'][] = 'Hoje';
         $this->messages['pt'][] = 'Fechar';
         $this->messages['pt'][] = 'Campo para a ação ^1 não definido';
-        $this->messages['pt'][] = 'Campo ^1 não existe';
+        $this->messages['pt'][] = 'Campo ^1 não existe ou contém valor NULL';
         $this->messages['pt'][] = 'Use o método ^1';
         $this->messages['pt'][] = 'Formulário sem campos';
         $this->messages['pt'][] = 'E-mail não enviado';
@@ -184,13 +192,16 @@ class AdiantiCoreTranslator
         $this->messages['pt'][] = 'Buscar registro';
         $this->messages['pt'][] = 'Campo';
         $this->messages['pt'][] = 'Registro atualizado';
+        $this->messages['pt'][] = 'Registros atualizados';
         $this->messages['pt'][] = 'Entrada';
         $this->messages['pt'][] = 'Classe ^1 não encontrada';
         $this->messages['pt'][] = 'Método ^1 não encontrado';
         $this->messages['pt'][] = 'Verifique o nome da classe ou do arquivo';
         $this->messages['pt'][] = 'Limpar';
+        $this->messages['pt'][] = 'Selecionar';
         $this->messages['pt'][] = 'Você deve definir o campo para a ação (^1)';
         $this->messages['pt'][] = 'A seção (^1) não foi fechada adequadamente';
+        $this->messages['pt'][] = 'O método ^1 somente aceita valores do tipo ^2 entre ^3 e ^4';
     }
     
     /**
@@ -232,7 +243,7 @@ class AdiantiCoreTranslator
      * Translate a word to the target language
      * @param $word     Word to be translated
      */
-    public static function translate($word, $param1 = NULL, $param2 = NULL, $param3 = NULL)
+    public static function translate($word, $param1 = NULL, $param2 = NULL, $param3 = NULL, $param4 = NULL)
     {
         // get the AdiantiCoreTranslator unique instance
         $instance = self::getInstance();
@@ -255,6 +266,10 @@ class AdiantiCoreTranslator
             if (isset($param3))
             {
                 $message = str_replace('^3', $param3, $message);
+            }
+            if (isset($param4))
+            {
+                $message = str_replace('^4', $param4, $message);
             }
             return $message;
         }

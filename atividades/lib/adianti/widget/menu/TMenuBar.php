@@ -23,7 +23,7 @@ class TMenuBar extends TElement
     {
         parent::__construct('div');
         $this->{'style'} = 'margin: 0;';
-        $this->{'class'} = 'collapse navbar-collapse';
+        $this->{'class'} = 'navbar';
     }
     
     /**

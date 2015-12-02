@@ -14,5 +14,7 @@ use Adianti\Control\TPage;
  */
 class TStandardForm extends TPage
 {
+    protected $form;
+    
     use AdiantiStandardFormTrait;
 }

@@ -3,10 +3,12 @@ namespace Adianti\Widget\Form;
 
 use Adianti\Widget\Form\AdiantiWidgetInterface;
 use Adianti\Control\TPage;
+use Adianti\Control\TAction;
 use Adianti\Core\AdiantiCoreTranslator;
 use Adianti\Widget\Base\TElement;
 use Adianti\Widget\Base\TScript;
 use Adianti\Widget\Form\TField;
+use Exception;
 
 /**
  * ComboBox Widget
@@ -27,7 +29,10 @@ class TMultiSearch extends TField implements AdiantiWidgetInterface
     protected $height;
     protected $minLength;
     protected $maxSize;
+    protected $editable;
     protected $initialItems;
+    protected $rawPostData;
+    protected $changeAction;
     
     /**
      * Class Constructor
@@ -42,6 +47,7 @@ class TMultiSearch extends TField implements AdiantiWidgetInterface
         $this->height = 100;
         $this->minLength = 5;
         $this->maxSize = 0;
+        $this->rawPostData = FALSE;
         
         if (LANG !== 'en')
         {
@@ -52,6 +58,31 @@ class TMultiSearch extends TField implements AdiantiWidgetInterface
         $this->tag = new TElement('input');
         $this->tag->{'type'} = 'hidden';
         $this->tag->{'component'} = 'multisearch';
+    }
+    
+    /**
+     * Define the action to be executed when the user changes the combo
+     * @param $action TAction object
+     */
+    public function setChangeAction(TAction $action)
+    {
+        if ($action->isStatic())
+        {
+            $this->changeAction = $action;
+        }
+        else
+        {
+            $string_action = $action->toString();
+            throw new Exception(AdiantiCoreTranslator::translate('Action (^1) must be static to be used in ^2', $string_action, __METHOD__));
+        }
+    }
+    
+    /**
+     * Define to use raw post data
+     */
+    public function useRawPostData($bool)
+    {
+        $this->rawPostData = $bool;
     }
     
     /**
@@ -105,24 +136,14 @@ class TMultiSearch extends TField implements AdiantiWidgetInterface
         {
             $val = $_POST[$this->name];
             
+            if ($this->rawPostData)
+            {
+                return $val;
+            }
+            
             if ($val)
             {
-                $rows = explode('||', $val);
-                $data = array();
-    
-                if (is_array($rows))
-                {
-                    foreach ($rows as $row)
-                    {
-                        $columns = explode('::', $row);
-                        
-                        if (is_array($columns))
-                        {
-                            $data[ $columns[0] ] = $columns[1];
-                        }
-                    }
-                }
-                return $data;
+                return $this->treatData($val);
             }
             return '';
         }
@@ -130,6 +151,47 @@ class TMultiSearch extends TField implements AdiantiWidgetInterface
         {
             return '';
         }
+    }
+    
+    /**
+     * Treat string post data and return as indexed array
+     */
+    public function treatData($val)
+    {
+        $rows = explode('||', $val);
+        $data = array();
+
+        if (is_array($rows))
+        {
+            foreach ($rows as $row)
+            {
+                $columns = explode('::', $row);
+                
+                if (is_array($columns))
+                {
+                    $data[ $columns[0] ] = $columns[1];
+                }
+            }
+        }
+        return $data;
+    }
+    
+    /**
+     * Encode array data as a string
+     */
+    private function encodeData($data)
+    {
+        $return = '';
+        if (is_array($data))
+        {
+            foreach ($data as $key => $value)
+            {
+                $return .= "{$key}::{$value}||";
+            }
+            $return = substr($return, 0, -2);
+        }
+        
+        return $return;
     }
     
     /**
@@ -158,6 +220,10 @@ class TMultiSearch extends TField implements AdiantiWidgetInterface
      */
     public function setValue($value)
     {
+        if (!empty($value) AND is_string($value))
+        {
+            $value = $this->treatData($value);
+        }
         $this->initialItems = $value;
         $this->value = $value;
     }
@@ -207,9 +273,33 @@ class TMultiSearch extends TField implements AdiantiWidgetInterface
         
         $search_word = AdiantiCoreTranslator::translate('Search');
         
-        // shows the component
-        $this->tag->show();
-        
-        TScript::create(" tmultisearch_start( '{$this->id}', '{$this->minLength}', '{$this->maxSize}', '{$search_word}', $multiple, {$preitems_json}, '{$this->size}px', '{$this->height}px', {$load_items} ); ");
+        if ($this->editable)
+        {
+            $this->tag->show();
+            
+            $change_action = 'function() {}';
+            if (isset($this->changeAction))
+            {
+                if (!TForm::getFormByName($this->formName) instanceof TForm)
+                {
+                    throw new Exception(AdiantiCoreTranslator::translate('You must pass the ^1 (^2) as a parameter to ^3', __CLASS__, $this->name, 'TForm::setFields()') );
+                }
+                
+                $string_action = $this->changeAction->serialize(FALSE);
+                $change_action = "function() { serialform=tmultisearch_get_form_data('{$this->formName}', '{$this->name}');
+                                             __adianti_ajax_lookup('$string_action&'+serialform, this); }";
+            }
+            
+            TScript::create(" tmultisearch_start( '{$this->id}', '{$this->minLength}', '{$this->maxSize}', '{$search_word}', $multiple, {$preitems_json}, '{$this->size}px', '{$this->height}px', {$load_items}, $change_action ); ");
+        }
+        else
+        {
+            $this->tag->{'readonly'} = "1";
+            $this->tag->{'class'} = 'tfield_disabled'; // CSS
+            $this->tag->{'onmouseover'} = "style.cursor='default'";
+            $this->tag->{'type'} = 'text';
+            $this->tag->{'value'} = $this->encodeData($this->value);
+            $this->tag->show();
+        }
     }
 }

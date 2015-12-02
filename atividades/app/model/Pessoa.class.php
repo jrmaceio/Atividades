@@ -47,8 +47,13 @@ class Pessoa extends TRecord
     {
         
         $criteria = new TCriteria;
+        
+        if($entcodent == '999'){
+        $criteria->add(new TFilter('origem', '=', 2) );
+        } else {
         $criteria->add(new TFilter('origem', '=', 1) );
         $criteria->add(new TFilter('codigo_cadastro_origem', '=', $entcodent) );
+        }
             
         $repository = new TRepository('Pessoa');
         $tickets = $repository->load($criteria);

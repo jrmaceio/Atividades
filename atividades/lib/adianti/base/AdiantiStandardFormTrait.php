@@ -9,8 +9,6 @@ use Exception;
 
 trait AdiantiStandardFormTrait
 {
-    protected $form;
-    
     use AdiantiStandardControlTrait;
     
     /**
@@ -53,11 +51,19 @@ trait AdiantiStandardFormTrait
             $this->form->setData($object);
             
             // shows the exception error message
-            new TMessage('error', '<b>Error</b> ' . $e->getMessage());
+            new TMessage('error', $e->getMessage());
             
             // undo all pending operations
             TTransaction::rollback();
         }
+    }
+    
+    /**
+     * Clear form
+     */
+    public function onClear($param)
+    {
+        $this->form->clear();
     }
     
     /**
@@ -98,7 +104,7 @@ trait AdiantiStandardFormTrait
         catch (Exception $e) // in case of exception
         {
             // shows the exception error message
-            new TMessage('error', '<b>Error</b> ' . $e->getMessage());
+            new TMessage('error', $e->getMessage());
             // undo all pending operations
             TTransaction::rollback();
         }

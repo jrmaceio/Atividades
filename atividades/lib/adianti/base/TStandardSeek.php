@@ -71,7 +71,7 @@ class TStandardSeek extends TWindow
         $find_button = new TButton('busca');
         // define the button action
         $find_button->setAction(new TAction(array($this, 'onSearch')), AdiantiCoreTranslator::translate('Search'));
-        $find_button->setImage('fa:search blue');
+        $find_button->setImage('ico_find.png blue');
         
         // add a row for the filter field
         $table->addRowSet( new TLabel(_t('Search').': '), $display_field, $find_button);
@@ -93,7 +93,7 @@ class TStandardSeek extends TWindow
         
         // create a datagrid action
         $action1 = new TDataGridAction(array($this, 'onSelect'));
-        $action1->setLabel('Selecionar');
+        $action1->setLabel(AdiantiCoreTranslator::translate('Select'));
         $action1->setImage('fa:check-circle-o green');
         $action1->setUseButton(TRUE);
         $action1->setField('id');
@@ -109,7 +109,7 @@ class TStandardSeek extends TWindow
         $this->pageNavigation->setAction(new TAction(array($this, 'onReload')));
         $this->pageNavigation->setWidth($this->datagrid->getWidth());
         
-        $panel = new TPanelGroup( AdiantiCoreTranslator::translate('Search record')  );
+        $panel = new TPanelGroup();
         $panel->add($this->form);
         
         // creates the container
@@ -136,7 +136,7 @@ class TStandardSeek extends TWindow
         {
             // creates a filter using the form content
             $display_field = TSession::getValue('standard_seek_display_field');
-            $filter = new TFilter($display_field, 'ilike', "%{$data-> display_field}%");
+            $filter = new TFilter($display_field, 'like', "%{$data-> display_field}%");
             
             // store the filter in section
             TSession::setValue('tstandardseek_filter',        $filter);

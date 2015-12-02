@@ -47,7 +47,7 @@ class SystemUserList extends TPage
         $new_button  = new TButton('new');
         // define the button actions
         $find_button->setAction(new TAction(array($this, 'onSearch')), _t('Find'));
-        $find_button->setImage('fa:search');
+        $find_button->setImage('ico_find.png');
         
         $new_button->setAction(new TAction(array('SystemUserForm', 'onEdit')), _t('New'));
         $new_button->setImage('fa:plus-square green');

@@ -42,7 +42,7 @@ class AdiantiMultiSearchService
                 $criteria = new TCriteria;
                 if ($param['criteria'])
                 {
-                    $criteria = unserialize(base64_decode($param['criteria']));
+                    $criteria = unserialize( base64_decode(str_replace(array('-', '_'), array('+', '/'), $param['criteria'])) );
                 }
     
                 $column = $param['column'];

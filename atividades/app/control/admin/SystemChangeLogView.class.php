@@ -42,7 +42,7 @@ class SystemChangeLogView extends TStandardList
         
         $tablename->setSize('80%');
         $login->setSize('80%');
-        $this->form->addQuickAction(_t('Search'), new TAction(array($this, 'onSearch')), 'fa:search');
+        $this->form->addQuickAction(_t('Search'), new TAction(array($this, 'onSearch')), 'ico_find.png');
         
         $this->formgrid = new TForm;
         

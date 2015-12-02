@@ -28,6 +28,7 @@ abstract class TField
     protected $editable;
     protected $tag;
     protected $formName;
+    protected $label;
     private   $validations;
     
     /**
@@ -45,7 +46,7 @@ abstract class TField
         
         // define some default properties
         self::setEditable(TRUE);
-        self::setName($name);
+        self::setName(trim($name));
         self::setSize(200);
         
         // initialize validations array

@@ -39,7 +39,7 @@ class TestePage extends TPage
         $this->datagrid->addQuickColumn('Valor1',   'valor1',    'left', 70);
         $this->datagrid->addQuickColumn('Valor2',   'valor2',    'left', 70);
         
-        $this->datagrid->addQuickAction('View', new TDataGridAction(array($this, 'onShowDetail')), 'code', 'ico_view.png');
+        $this->datagrid->addQuickAction('View', new TDataGridAction(array($this, 'onShowDetail')), 'code', 'ico_find.png');
         // creates the datagrid model
         $this->datagrid->createModel();
         

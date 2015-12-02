@@ -154,10 +154,10 @@ class TDataGridAction extends TAction
             {
                 $this->setParameter('order',      $_REQUEST['order'] );
             }
-            if (parent::isStatic())
-            {
-                $this->setParameter('static',     '1' );
-            }
+        }
+        if (parent::isStatic())
+        {
+            $this->setParameter('static',     '1' );
         }
         return parent::serialize($format_action);
     }

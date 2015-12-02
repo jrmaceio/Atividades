@@ -14,6 +14,7 @@ $.getScript("lib/adianti/include/texpander/texpander.js");
 $.getScript("lib/adianti/include/tfield/tfield.js");
 $.getScript("lib/adianti/include/ttreeview/ttreeview.js");
 $.getScript("lib/adianti/include/tfile/tfile.js");
+$.getScript("lib/adianti/include/tmultifile/tmultifile.js");
 $.getScript("lib/adianti/include/thtmleditor/thtmleditor.js");
 $.getScript("lib/adianti/include/tmenubar/tmenubar.js");
 $.getScript("lib/adianti/include/tmultifield/tmultifield.js");

@@ -98,7 +98,7 @@ class AtividadeList extends TPage
         
         // create two action buttons to the form
         $find_button = TButton::create('find', array($this, 'onSearch'), _t('Find'), 'ico_find.png');
-        $new_button  = TButton::create('new',  array('AtividadeForm', 'onEdit'), _t('New'), 'ico_new.png');
+        $new_button  = TButton::create('new',  array('AtividadeForm', 'onEdit'), _t('New'), 'fa:plus-square green');
         $clean_button  = TButton::create('clean',  array($this, 'onClean'), 'Limpar', 'ico_close.png');
         
         $this->form->addField($find_button);
@@ -170,7 +170,7 @@ class AtividadeList extends TPage
         // creates two datagrid actions
         $action1 = new TDataGridAction(array('AtividadeForm', 'onEdit'));
         $action1->setLabel(_t('Edit'));
-        $action1->setImage('ico_edit.png');
+        $action1->setImage('fa:pencil-square-o blue fa-lg');
         $action1->setField('id');
         
         // add the actions to the datagrid
@@ -393,21 +393,14 @@ class AtividadeList extends TPage
             
             if (isset($newparam['order']) AND $newparam['order'] == 'sistema->nome')
             {
-                $newparam['order'] = '(select nome from tipo_atividade where sistema_id = id)';
+                $newparam['order'] = '(select nome from sistema where sistema_id = id)';
             }
                         
             // default order
-            $newparam['direction'] = 'asc';
             if (empty($newparam['order']))
             {
                 $newparam['order'] = 'data_atividade desc, id ';
                 $newparam['direction'] = 'desc';
-            }
-            
-            if($newparam['order'] == 'data_atividade')
-            {
-                $newparam['order'] = 'data_atividade asc, id ';
-                $newparam['direction'] = 'asc';
             }
             
             $criteria->setProperties($newparam); // order, offset

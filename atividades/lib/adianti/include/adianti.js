@@ -46,6 +46,20 @@ function __adianti_query_string()
 }
 
 /**
+ * Converts query string into json object
+ */
+function __adianti_query_to_json(query)
+{
+    var decode = function (s) { return decodeURIComponent(s.replace(/\+/g, " ")); };
+    var urlParams = {};
+    var search = /([^&=]+)=?([^&]*)/g;
+    while (match = search.exec(query)) {
+       urlParams[decode(match[1])] = decode(match[2]);
+    }
+    return urlParams;
+}
+
+/**
  * Loads an HTML content
  */
 function __adianti_load_html(content, afterCallback)
@@ -134,7 +148,15 @@ function __adianti_load_page_no_register2(page)
  */
 function __adianti_append_page(page)
 {
-    $.get(page, function(data)
+    page = page.replace('engine.php?','');
+    params_json = __adianti_query_to_json(page);
+
+    uri = 'engine.php?' 
+        + 'class=' + params_json.class
+        + '&method=' + params_json.method
+        + '&static=' + (params_json.static == '1' ? '1' : '0');
+
+    $.post(uri, params_json, function(data)
     {
         data = data.replace(new RegExp('__adianti_append_page', 'g'), '__adianti_append_page2'); // chamadas presentes em botões seekbutton em window, abrem em outra janela
         $('#adianti_online_content').after('<div></div>').html(data);
@@ -146,7 +168,15 @@ function __adianti_append_page(page)
  */
 function __adianti_append_page2(page)
 {
-    $.get(page, function(data)
+    page = page.replace('engine.php?','');
+    params_json = __adianti_query_to_json(page);
+
+    uri = 'engine.php?' 
+        + 'class=' + params_json.class
+        + '&method=' + params_json.method
+        + '&static=' + (params_json.static == '1' ? '1' : '0');
+
+    $.post(uri, params_json, function(data)
     {
         data = data.replace(new RegExp('__adianti_load_html', 'g'), '__adianti_load_html2'); // se tem um botão de buscar, ele está conectado a __adianti_load_html
         data = data.replace(new RegExp('__adianti_post_data', 'g'), '__adianti_post_data2'); // se tem um botão de buscar, ele está conectado a __adianti_load_html
@@ -161,39 +191,42 @@ function __adianti_append_page2(page)
  */
 function __adianti_load_page(page)
 {
-    $( '.modal-backdrop' ).remove();
-    
-    url = page;
-    url = url.replace('index.php', 'engine.php');
-    
-    if (typeof Adianti.onBeforeLoad == "function")
+    if (typeof page !== 'undefined')
     {
-        Adianti.onBeforeLoad(url);
-    }
-    
-    if (url.indexOf('&static=1') > 0)
-    {
-        $.get(url, function(data)
+        $( '.modal-backdrop' ).remove();
+        
+        url = page;
+        url = url.replace('index.php', 'engine.php');
+        
+        if (typeof Adianti.onBeforeLoad == "function")
         {
-            __adianti_parse_html(data);
-            
-            if (typeof Adianti.onAfterLoad == "function")
-            {
-                Adianti.onAfterLoad();
-            }
-        });
-    }
-    else
-    {
-        $.get(url, function(data)
+            Adianti.onBeforeLoad(url);
+        }
+        
+        if (url.indexOf('&static=1') > 0)
         {
-            __adianti_load_html(data, Adianti.onAfterLoad);
-            
-            if ( history.pushState && (data.indexOf("TWindow") < 0) )
+            $.get(url, function(data)
             {
-                __adianti_register_state(url, 'adianti');
-            }
-        });
+                __adianti_parse_html(data);
+                
+                if (typeof Adianti.onAfterLoad == "function")
+                {
+                    Adianti.onAfterLoad();
+                }
+            });
+        }
+        else
+        {
+            $.get(url, function(data)
+            {
+                __adianti_load_html(data, Adianti.onAfterLoad);
+                
+                if ( history.pushState && (data.indexOf("TWindow") < 0) )
+                {
+                    __adianti_register_state(url, 'adianti');
+                }
+            });
+        }
     }
 }
 
@@ -223,7 +256,7 @@ function __adianti_block_ui(wait_message)
     }
     
     $.blockUI({ 
-       message: '<h1>'+wait_message+'</h1>',
+       message: '<h1><i class="fa fa-spinner fa-spin"></i> '+wait_message+'</h1>',
        css: { 
            border: 'none', 
            padding: '15px', 
@@ -243,7 +276,7 @@ function __adianti_message(title, message, callback)
     bootbox.dialog({
       title: title,
       message: '<div>'+
-                '<img src="lib/adianti/images/info.png" border="0" style="float:left">'+
+                '<span class="fa fa-fa fa-info-circle fa-5x blue" style="float:left"></span>'+
                 '<span display="block" style="margin-left:20px;float:left">'+message+'</span>'+
                 '</div>',
       buttons: {
@@ -270,7 +303,7 @@ function __adianti_question(title, message, callback)
     bootbox.dialog({
       title: title,
       message: '<div>'+
-                '<img src="lib/adianti/images/question.png" border="0" style="float:left">'+
+                '<span class="fa fa-fa fa-question-circle fa-5x blue" style="float:left"></span>'+
                 '<span display="block" style="margin-left:20px;float:left">'+message+'</span>'+
                 '</div>',
       buttons: {
@@ -312,11 +345,11 @@ function __adianti_unblock_ui()
 /**
  * Post form data
  */
-function __adianti_post_data(form, url)
+function __adianti_post_data(form, action)
 {
     __adianti_block_ui();
     
-    url = 'index.php?'+url;
+    url = 'index.php?'+action;
     url = url.replace('index.php', 'engine.php');
     data = $('#'+form).serialize();
     
@@ -383,24 +416,42 @@ function __adianti_register_state(url, origin)
 /**
  * Ajax lookup
  */
-function __adianti_ajax_lookup(string_action, field)
+function __adianti_ajax_lookup(action, field)
 {
-    var id = field.value;
-    __adianti_ajax_exec(string_action +'&key='+id+'&ajax_lookup=1', null, false);
+    var value = field.value;
+    __adianti_ajax_exec(action +'&key='+value+'&ajax_lookup=1', null, false);
 }
 
 /**
  * Execute an Ajax action
  */
-function __adianti_ajax_exec(string_action, callback, async)
+function __adianti_ajax_exec(action, callback, async)
 {
     async = typeof async !== 'undefined' ? async : true;
-    uri = 'engine.php?' + string_action +'&static=1';
+    uri = 'engine.php?' + action +'&static=1';
     
     $.ajax({
       url: uri,
       async: async }).done(function( data ) {
           __adianti_parse_html(data, callback);
+      }).fail(function(jqxhr, settings, exception) {
+         //alert(exception + ': ' + jqxhr.responseText);
+         $('<div />').html(jqxhr.responseText).dialog({modal: true, title: 'Error', width : '80%', height : 'auto', resizable: true, closeOnEscape:true, focus:true});
+      });
+}
+
+function __adianti_post_lookup(form, action, field) {
+    var formdata = $('#'+form).serializeArray();
+    var uri = 'engine.php?' + action +'&static=1';
+    formdata.push({name: 'key', value: field.value});
+    formdata.push({name: 'ajax_lookup', value: 1});
+    
+    $.ajax({
+      type: 'POST',
+      url: uri,
+      data: formdata,
+      async: false }).done(function( data ) {
+          __adianti_parse_html(data, null);
       }).fail(function(jqxhr, settings, exception) {
          //alert(exception + ': ' + jqxhr.responseText);
          $('<div />').html(jqxhr.responseText).dialog({modal: true, title: 'Error', width : '80%', height : 'auto', resizable: true, closeOnEscape:true, focus:true});
@@ -485,7 +536,10 @@ function __adianti_process_popover()
     
     $('body').on('click', function (e) {
         $('.tooltip').hide();
-        $('.popover').hide();
+        if ($(e.target).data('toggle') !== 'popover')
+        {
+            $('.popover').popover('toggle');
+        }
     });
 }
 
@@ -520,10 +574,13 @@ $(document).ajaxComplete(function ()
 {
     __adianti_process_popover();
     
-    // refresh html over dialogs
-    if ($('[class="thtmleditor"]').length > 0) {
-        $('[class="thtmleditor"]').cleditor()[0].disable(false).refresh();;
-    }
+    $('table[datatable="true"]:not(.dataTable)').DataTable( {
+        responsive: true,
+        paging: false,
+        searching: false,
+        ordering:  false,
+        info: false
+    } );
 });
 
 /**

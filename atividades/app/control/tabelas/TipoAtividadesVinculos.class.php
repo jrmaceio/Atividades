@@ -36,7 +36,7 @@ class TipoAtividadesVinculos extends TPage {
         $action_button1 = new TAction(array($this, 'onUpdate'));
         $action_button1->setParameter('id', filter_input(INPUT_GET, 'id'));
         $button1->setAction($action_button1, 'Atualizar');
-        $button1->setImage('ico_apply.png');
+        $button1->setImage('fa:check-circle-o green');
  
         $this->form->addField($button1);
  

@@ -109,12 +109,12 @@ class RequisitoDesenvolvimentoList extends TPage
         // creates two datagrid actions
         $action1 = new TDataGridAction(array('RequisitoDesenvolvimentoForm', 'onEdit'));
         $action1->setLabel(_t('Edit'));
-        $action1->setImage('ico_edit.png');
+        $action1->setImage('fa:pencil-square-o blue fa-lg');
         $action1->setField('id');
         
         $action2 = new TDataGridAction(array($this, 'onDelete'));
         $action2->setLabel(_t('Delete'));
-        $action2->setImage('ico_delete.png');
+        $action2->setImage('fa:trash-o red fa-lg');
         $action2->setField('id');
         
         // add the actions to the datagrid

@@ -119,8 +119,7 @@ class TSpinner extends TField implements AdiantiWidgetInterface
                     throw new Exception(AdiantiCoreTranslator::translate('You must pass the ^1 (^2) as a parameter to ^3', __CLASS__, $this->name, 'TForm::setFields()') );
                 }            
                 $string_action = $this->exitAction->serialize(FALSE);
-                $exit_action = "function() { serialform=(\$('#{$this->formName}').serialize());
-                                             __adianti_ajax_lookup('$string_action&'+serialform, this); }";
+                $exit_action = "function() { __adianti_post_lookup('{$this->formName}', '{$string_action}', document.{$this->formName}.{$this->name}) }";
             }
             
             TScript::create(" tspinner_start( '#{$this->id}', '{$this->value}', '{$this->min}', '{$this->max}', '{$this->step}', $exit_action); ");

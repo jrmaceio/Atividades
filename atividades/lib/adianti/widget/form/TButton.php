@@ -24,10 +24,10 @@ use Exception;
 class TButton extends TField implements AdiantiWidgetInterface
 {
     private $action;
-    private $label;
     private $image;
     private $properties;
     private $functions;
+    protected $label;
     protected $formName;
     
     /**

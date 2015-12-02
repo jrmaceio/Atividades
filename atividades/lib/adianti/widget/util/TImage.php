@@ -25,13 +25,13 @@ class TImage extends TElement
     {
         if (substr($source,0,3) == 'bs:')
         {
-            parent::__construct('span');
+            parent::__construct('i');
             $this-> class = 'glyphicon glyphicon-'.substr($source,3);
             parent::add('');
         }
         else if (substr($source,0,3) == 'fa:')
         {
-            parent::__construct('span');
+            parent::__construct('i');
             $this-> class = 'fa fa-'.substr($source,3);
             parent::add('');
         }
@@ -58,7 +58,7 @@ class TImage extends TElement
         }
         else
         {
-            parent::__construct('span');
+            parent::__construct('i');
         }
     }
 }

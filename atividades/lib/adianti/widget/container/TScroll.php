@@ -66,21 +66,24 @@ class TScroll extends TElement
      */
     public function show()
     {
-        $stylename = 'style_' . $this->{'id'};
-        $style = new TStyle($stylename);
         if (!$this->transparency)
         {
-            $style-> border        = '1px solid #c2c2c2';
-            $style-> background    = '#ffffff';
+            $this->{'style'} .= ';border: 1px solid #c2c2c2';
+            $this->{'style'} .= ';background: #ffffff';
         }
-        $style-> padding       = "{$this->margin}px";
-        $style-> width         = $this->width . 'px';
-        $style-> height        = $this->height . 'px';
+        $this->{'style'} .= ";padding: {$this->margin}px";
         
-        // show the style
-        $style->show();
+        if ($this->width)
+        {
+            $this->{'style'} .= ";width:{$this->width}px";
+        }
         
-        $this->{'class'} = "tscroll {$stylename}";
+        if ($this->height)
+        {
+            $this->{'style'} .= ";height:{$this->height}px";
+        }
+        
+        $this->{'class'} .= " tscroll";
         parent::show();
     }
 }

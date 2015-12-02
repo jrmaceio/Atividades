@@ -175,10 +175,10 @@ class AtividadeForm extends TPage
 
 
         // create the form actions
-        $save_button = TButton::create('save', array($this, 'onSave'), _t('Save'), 'ico_save.png');
-        $new_button  = TButton::create('new',  array($this, 'onEdit'), _t('New'),  'ico_new.png');
-        $del_button  = TButton::create('delete',  array($this, 'onDelete'), _t('Delete'),  'ico_delete.png');
-        $list_button = TButton::create('list', array('AtividadeList', 'onClean'), _t('List'), 'ico_datagrid.png');
+        $save_button = TButton::create('save', array($this, 'onSave'), _t('Save'), 'fa:floppy-o');
+        $new_button  = TButton::create('new',  array($this, 'onEdit'), _t('New'),  'fa:plus-square green');
+        $del_button  = TButton::create('delete',  array($this, 'onDelete'), _t('Delete'),  'fa:trash-o red fa-lg');
+        $list_button = TButton::create('list', array('AtividadeList', 'onClean'), _t('List'), 'fa:table blue');
         
         $this->form->addField($save_button);
         $this->form->addField($new_button);

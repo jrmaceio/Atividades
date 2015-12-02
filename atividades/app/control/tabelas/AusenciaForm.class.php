@@ -89,8 +89,8 @@ class AusenciaForm extends TPage
         $data_final->setExitAction($change_data);
 
         // create the form actions
-        $save_button = TButton::create('save', array($this, 'onSave'), _t('Save'), 'ico_save.png');
-        $new_button  = TButton::create('new',  array($this, 'onEdit'), _t('New'),  'ico_new.png');
+        $save_button = TButton::create('save', array($this, 'onSave'), _t('Save'), 'fa:floppy-o');
+        $new_button  = TButton::create('new',  array($this, 'onEdit'), _t('New'),  'fa:plus-square green');
         
         $this->form->addField($save_button);
         $this->form->addField($new_button);

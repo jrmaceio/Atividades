@@ -1,9 +1,10 @@
-function tdbmultisearch_start( id, minlen, maxsize, placeholder, multiple, service, width, height, load_data, hash ) {
+function tdbmultisearch_start( id, minlen, maxsize, placeholder, multiple, service, width, height, load_data, hash, callback ) {
     $('#'+id).select2(
     {
         minimumInputLength: minlen,
         maximumSelectionSize: maxsize,
         separator: '||',
+        allowClear: true,
         placeholder: placeholder,
         multiple: multiple,
         id: function(e) { return e.id+"::"+e.text; },
@@ -35,6 +36,14 @@ function tdbmultisearch_start( id, minlen, maxsize, placeholder, multiple, servi
         },             
                       
     });
+    
+    if (typeof callback != 'undefined')
+    {
+        $('#'+id).on("change", function (e) {
+            callback();
+        });
+    }
+    
     $('#s2id_'+id+ '> .select2-choices').height(height).width(width).css('overflow-y','auto');
     if (typeof load_data !== "undefined") {
         $('#'+id).select2("data", load_data);

@@ -76,9 +76,12 @@ class TInputDialog
             {
                 foreach ($actionButtons as $key => $button)
                 {
-                    $button->{'data-toggle'} = "modal";
-                    $button->{'data-dismiss'} = 'modal';
-                    $button->addFunction( "tdialog_close('{$this->id}')" );
+                    if ($button->getAction()->getParameter('stay-open') !== 1)
+                    {
+                        $button->addFunction( "tdialog_close('{$this->id}')" );
+                        $button->{'data-toggle'} = "modal";
+                        $button->{'data-dismiss'} = 'modal';
+                    }
                     $buttons[] = $button;
                 }
             }
@@ -86,9 +89,12 @@ class TInputDialog
         else
         {
             $button = new TButton(strtolower(str_replace(' ', '_', $caption)));
-            $button->{'data-toggle'} = "modal";
-            $button->{'data-dismiss'} = 'modal';
-            $button->addFunction( "tdialog_close('{$this->id}')" );
+            if ($action->getParameter('stay-open') !== 1)
+            {
+                $button->{'data-toggle'} = "modal";
+                $button->{'data-dismiss'} = 'modal';
+                $button->addFunction( "tdialog_close('{$this->id}')" );
+            }
             $button->setAction( $action );
             $button->setLabel( $caption );
             $buttons[] = $button;

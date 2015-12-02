@@ -123,6 +123,7 @@ class TForm implements AdiantiFormInterface
                         {
                             $data = addslashes($data);
                         }
+                        $data = str_replace(array("\n", "\r"), array( ' ', ' '), $data );
                         // send the property value to the form
                         TScript::create( " tform_send_data('{$form_name}', '{$field}_{$property}', '$data', $fire_param); " );
                     }
@@ -138,6 +139,9 @@ class TForm implements AdiantiFormInterface
                     {
                         $value = addslashes($value);
                     }
+                    
+                    $value = str_replace(array("\n", "\r"), array( ' ', ' '), $value );
+                    
                     // send the property value to the form
                     if ($aggregate)
                     {

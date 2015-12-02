@@ -9,6 +9,7 @@ use Adianti\Widget\Container\TNotebook;
  * @author     Pablo Dall'Oglio
  * @copyright  Copyright (c) 2006-2014 Adianti Solutions Ltd. (http://www.adianti.com.br)
  * @license    http://www.adianti.com.br/framework-license
+ * @wrapper    TNotebook
  */
 class BootstrapNotebookWrapper
 {

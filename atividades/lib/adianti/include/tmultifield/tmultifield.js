@@ -297,6 +297,9 @@ function MultiField(objId, width, height)
                 case 'text':
                     inputs[0].value = '';
                     break;
+                case 'textarea':
+                    inputs[0].value = '';
+                    break;
                 case 'hidden':
                     if(inputs[0].getAttribute('component') == 'multisearch')
                     {
@@ -348,6 +351,9 @@ function MultiField(objId, width, height)
             switch (inputs[0].type)
             {
                 case 'text':
+                    return inputs[0].value;
+                    break;
+                case 'textarea':
                     return inputs[0].value;
                     break;
                 case 'hidden':

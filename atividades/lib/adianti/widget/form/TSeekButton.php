@@ -172,9 +172,7 @@ class TSeekButton extends TEntry implements AdiantiWidgetInterface
                     $string_action = $ajaxAction->serialize(FALSE);
                     if ($this->useOutEvent)
                     {
-                        $this->setProperty('seekaction', "serialform=(\$('#{$this->formName}').serialize());
-                                                         __adianti_ajax_lookup('$string_action&'+serialform, document.{$this->formName}.{$this->name})");
-                                                      
+                        $this->setProperty('seekaction', "__adianti_post_lookup('{$this->formName}', '{$string_action}', document.{$this->formName}.{$this->name})");
                         $this->setProperty('onBlur', $this->getProperty('seekaction'), FALSE);
                     }
                 }

@@ -244,10 +244,10 @@ class TicketForm extends TPage
                                          $combo_tipo_origens,$combo_codigo_origem,$combo_solicitante_id, $logado_id));
 
         // create the form actions
-        $save_button   = TButton::create('save', array($this, 'onSave'), _t('Save'), 'ico_save.png');
-        $new_button    = TButton::create('new',  array($this, 'onEdit'), _t('New'),  'ico_new.png');
-        $del_button    = TButton::create('delete',  array($this, 'onDelete'), _t('Delete'),  'ico_delete.png');
-        $list_button   = TButton::create('list', array('TicketList', 'onReload'), _t('List'), 'ico_datagrid.png');
+        $save_button   = TButton::create('save', array($this, 'onSave'), _t('Save'), 'fa:floppy-o');
+        $new_button    = TButton::create('new',  array($this, 'onEdit'), _t('New'),  'fa:plus-square green');
+        $del_button    = TButton::create('delete',  array($this, 'onDelete'), _t('Delete'),  'fa:trash-o red fa-lg');
+        $list_button   = TButton::create('list', array('TicketList', 'onReload'), _t('List'), 'fa:table blue');
         $enviar_email  = TButton::create('email', array($this, 'onEnviaEmail'), 'Enviar Email', 'ico_email.png');
         $sincronizar   = TButton::create('sincronizar', array($this, 'onSincronizarContatos'), 'Sincronizar Contatos', 'sincronizar.png');
         

@@ -94,6 +94,14 @@ class TSession implements AdiantiRegistryInterface
     }
     
     /**
+     * Regenerate id
+     */
+    public static function regenerate()
+    {
+        session_regenerate_id();
+    }
+    
+    /**
      * Clear session
      */
     public static function clear()

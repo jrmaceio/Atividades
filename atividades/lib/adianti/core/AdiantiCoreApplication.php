@@ -176,8 +176,8 @@ class AdiantiCoreApplication
         if ( $errno === E_RECOVERABLE_ERROR )
         {
             throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
-        	}
-     
-        	return false;
+    	}
+ 
+    	return false;
     }
 }

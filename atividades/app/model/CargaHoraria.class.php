@@ -46,12 +46,5 @@ class CargaHoraria extends TRecord
         // returns the associated object
         return $this->pessoa;
     }
-    
-    public function atualizaCargaHoraria($horario, $mes, $ano)
-    {
-        $conn = TTransaction::get();
-        $result = $conn->query("update carga_horaria set horario = '{$horario}' where mes = {$mes} and ano = {$ano}");
-        return $result;    
-    }
 
 }

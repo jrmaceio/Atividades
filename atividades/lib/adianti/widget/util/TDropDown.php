@@ -26,7 +26,7 @@ class TDropDown extends TElement
      * @param $title Dropdown title
      * @param $icon  Dropdown icon
      */
-    public function __construct($title, $icon = NULL)
+    public function __construct($title, $icon = NULL, $use_caret = TRUE)
     {
         parent::__construct('div');
         $this->{'class'} = 'btn-group';
@@ -37,15 +37,18 @@ class TDropDown extends TElement
         $button->{'class'}       = 'btn btn-default btn-sm dropdown-toggle';
         $this->button = $button;
         
-        $span = new TElement('span');
-        $span->{'class'} = 'caret';
-        
         if ($icon)
         {
             $button->add(new TImage($icon));
         }
         $button->add($title);
-        $button->add($span);
+        if ($use_caret)
+        {
+            $span = new TElement('span');
+            $span->{'class'} = 'caret';
+            $button->add($span);
+        }
+        
         parent::add($button);
         
         //$this->id = 'tdropdown_' . mt_rand(1000000000, 1999999999);
@@ -80,6 +83,14 @@ class TDropDown extends TElement
     public function setButtonClass($class)
     {
         $this->button->{'class'} = $class;
+    }
+    
+    /**
+     * Returns the dropdown button
+     */
+    public function getButton()
+    {
+        return $this->button;
     }
     
     /**

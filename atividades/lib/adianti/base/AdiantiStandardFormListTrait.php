@@ -15,17 +15,6 @@ use Exception;
 
 trait AdiantiStandardFormListTrait
 {
-    protected $form;
-    protected $datagrid;
-    protected $pageNavigation;
-    protected $filterField;
-    protected $loaded;
-    protected $limit;
-    protected $order;
-    protected $direction;
-    protected $criteria;
-    protected $transformCallback;
-    
     use AdiantiStandardControlTrait;
     
     /**
@@ -81,7 +70,7 @@ trait AdiantiStandardFormListTrait
             $repository = new TRepository($this->activeRecord);
             $limit = isset($this->limit) ? ( $this->limit > 0 ? $this->limit : NULL) : 10;
             // creates a criteria
-            $criteria = isset($this->criteria) ? $this->criteria : new TCriteria;
+            $criteria = isset($this->criteria) ? clone $this->criteria : new TCriteria;
             if ($this->order)
             {
                 $criteria->setProperty('order',     $this->order);
@@ -127,7 +116,7 @@ trait AdiantiStandardFormListTrait
         catch (Exception $e) // in case of exception
         {
             // shows the exception error message
-            new TMessage('error', '<b>Error</b> ' . $e->getMessage());
+            new TMessage('error', $e->getMessage());
             // undo all pending operations
             TTransaction::rollback();
         }
@@ -176,7 +165,7 @@ trait AdiantiStandardFormListTrait
             $this->form->setData($object);
             
             // shows the exception error message
-            new TMessage('error', '<b>Error</b> ' . $e->getMessage());
+            new TMessage('error', $e->getMessage());
             
             // undo all pending operations
             TTransaction::rollback();
@@ -230,10 +219,18 @@ trait AdiantiStandardFormListTrait
         catch (Exception $e) // in case of exception
         {
             // shows the exception error message
-            new TMessage('error', '<b>Error</b> ' . $e->getMessage());
+            new TMessage('error', $e->getMessage());
             // undo all pending operations
             TTransaction::rollback();
         }
+    }
+    
+    /**
+     * Clear form
+     */
+    public function onClear($param)
+    {
+        $this->form->clear();
     }
     
     /**
@@ -275,7 +272,7 @@ trait AdiantiStandardFormListTrait
         catch (Exception $e) // in case of exception
         {
             // shows the exception error message
-            new TMessage('error', '<b>Error</b> ' . $e->getMessage());
+            new TMessage('error', $e->getMessage());
             // undo all pending operations
             TTransaction::rollback();
         }

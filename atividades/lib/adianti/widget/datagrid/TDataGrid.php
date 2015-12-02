@@ -27,6 +27,7 @@ class TDataGrid extends TTable
     protected $actions;
     protected $action_groups;
     protected $rowcount;
+    protected $thead;
     protected $tbody;
     protected $height;
     protected $scrollable;
@@ -41,6 +42,8 @@ class TDataGrid extends TTable
     protected $popcontent;
     protected $objects;
     protected $actionWidth;
+    protected $groupCount;
+    protected $groupRowCount;
     
     /**
      * Class Constructor
@@ -54,6 +57,7 @@ class TDataGrid extends TTable
         $this->groupColumn = NULL;
         $this->groupContent = NULL;
         $this->groupMask = NULL;
+        $this->groupCount = 0;
         $this->actions = array();
         $this->action_groups = array();
         $this->actionWidth = '16px';
@@ -79,6 +83,10 @@ class TDataGrid extends TTable
     public function makeScrollable()
     {
         $this->scrollable = TRUE;
+        if (isset($this->thead))
+        {
+            $this->thead->style = 'display: block';
+        }
     }
     
     /**
@@ -168,16 +176,24 @@ class TDataGrid extends TTable
     /**
      * Clear the DataGrid contents
      */
-    function clear()
+    function clear( $preserveHeader = TRUE)
     {
         if ($this->modelCreated)
         {
-            // copy the headers
-            $copy = $this->children[0];
-            // reset the row array
-            $this->children = array();
-            // add the header again
-            $this->children[] = $copy;
+            if ($preserveHeader)
+            {
+                // copy the headers
+                $copy = $this->children[0];
+                // reset the row array
+                $this->children = array();
+                // add the header again
+                $this->children[] = $copy;
+            }
+            else
+            {
+                // reset the row array
+                $this->children = array();
+            }
             
             // add an empty body
             $this->tbody = new TElement('tbody');
@@ -203,16 +219,16 @@ class TDataGrid extends TTable
             return;
         }
         
-        $thead = new TElement('thead');
-        $thead->{'class'} = 'tdatagrid_head';
-        parent::add($thead);
+        $this->thead = new TElement('thead');
+        $this->thead->{'class'} = 'tdatagrid_head';
+        parent::add($this->thead);
         
         $row = new TElement('tr');
         if ($this->scrollable)
         {
-            $row->{'style'} = 'display:block';
+            $this->thead->{'style'} = 'display:block';
         }
-        $thead->add($row);
+        $this->thead->add($row);
         
         $actions_count = count($this->actions) + count($this->action_groups);
         
@@ -328,6 +344,9 @@ class TDataGrid extends TTable
             {
                 $row = new TElement('tr');
                 $row->{'class'} = 'tdatagrid_group';
+                $row->{'level'} = ++ $this->groupCount;
+                $this->groupRowCount = 0;
+                
                 $this->tbody->add($row);
                 $cell = new TElement('td');
                 $cell->add( $this->replace($this->groupMask, $object) );
@@ -342,6 +361,13 @@ class TDataGrid extends TTable
             $row = new TElement('tr');
             $this->tbody->add($row);
             $row->{'class'} = $classname;
+            
+            if ($this->groupColumn)
+            {
+                $this->groupRowCount ++;
+                $row->{'childof'} = $this->groupCount;
+                $row->{'level'}   = $this->groupCount . '.'. $this->groupRowCount;
+            }
             
             if ($this->actions)
             {
@@ -501,14 +527,14 @@ class TDataGrid extends TTable
                         
                         if (isset($first_url) AND $this->defaultClick)
                         {
-                            $cell-> href      = $first_url;
-                            $cell-> generator = 'adianti';
-                            $cell->{'class'} = 'tdatagrid_cell';
+                            $cell->{'href'}      = $first_url;
+                            $cell->{'generator'} = 'adianti';
+                            $cell->{'class'}     = 'tdatagrid_cell';
                         }
                     }
                     if ($width)
                     {
-                        $cell-> width = $width.'px';
+                        $cell->{'width'} = $width.'px';
                     }
                 }
             }
@@ -610,12 +636,15 @@ class TDataGrid extends TTable
         
         if ( !isset( $object->$field ) )
         {
-            throw new Exception(AdiantiCoreTranslator::translate('Field ^1 not exists', $field));
+            throw new Exception(AdiantiCoreTranslator::translate('Field ^1 not exists or contains NULL value', $field));
         }
         
         // get the object property that will be passed ahead
-        $key    = isset($object->$field) ? $object->$field : NULL;
-        $action->setParameter('key', $key);
+        $action->setParameter('key', isset($object->$field) ? $object->$field : NULL);
+        if (isset($object->$field))
+        {
+            $action->setParameter($field, $object->$field);
+        }
     }
     
     /**
@@ -661,6 +690,7 @@ class TDataGrid extends TTable
         
         // inline editing treatment
         TScript::create(" tdatagrid_inlineedit( '{$urlparams}' );");
+        TScript::create(" tdatagrid_enable_groups();");
     }
     
     /**

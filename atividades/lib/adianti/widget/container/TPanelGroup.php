@@ -21,6 +21,19 @@ class TPanelGroup extends TElement
     private $footer;
     
     /**
+     * Static creator for panels
+     * @param $title Panel title
+     * @param $element Panel content
+     */
+    public static function pack($title, $element)
+    {
+        $panel = new self($title);
+        $panel->add($element);
+        
+        return $panel;
+    }
+    
+    /**
      * Constructor method
      * @param $title  Panel Title
      * @param $footer Panel Footer

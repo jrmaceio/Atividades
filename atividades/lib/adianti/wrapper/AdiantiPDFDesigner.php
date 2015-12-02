@@ -2,6 +2,7 @@
 namespace Adianti\Wrapper;
 
 use FPDF;
+use Exception;
 use SimpleXMLIterator;
 
 /**
@@ -12,6 +13,7 @@ use SimpleXMLIterator;
  * @author     Pablo Dall'Oglio
  * @copyright  Copyright (c) 2006-2014 Adianti Solutions Ltd. (http://www.adianti.com.br)
  * @license    http://www.adianti.com.br/framework-license
+ * @alias      TPDFDesigner
  */
 class AdiantiPDFDesigner extends FPDF
 {

@@ -108,23 +108,29 @@ class Ponto extends TRecord
     {
         $string = new StringsUtil;        
         $mes = date('m');
+        $ano = date('Y');
         $conn = TTransaction::get();
         $result = $conn->query("select (hora_saida - hora_entrada) as horario from ponto 
-                                where colaborador_id = {$user} and extract('month' from data_ponto) = {$mes} and hora_saida is not null and hora_entrada is not null");
+                                where colaborador_id = {$user} and extract('month' from data_ponto) = {$mes} and extract('year' from data_ponto) = {$ano} and hora_saida is not null and hora_entrada is not null");
         
         $almoco       = new DateTime('01:00:00');
         $limite       = new DateTime('06:00:00');
         $cargaHoraria = $string->time_to_sec('08:48:00');
+        $saldo = null;
         
         foreach ($result as $row)
         {
             $total = new DateTime($row['horario']);
-            if($total > $limite)
-            {
+            if($total > $limite){
                $total = $total->diff($almoco)->format('%H:%I:%S');
-            }            
+            } else {
+                $total = $row['horario'];
+            }
+                     
             $saldo += $string->time_to_sec($total) - $cargaHoraria;
         }
+        
+        
         return $string->sec_to_time($saldo);
     }
     

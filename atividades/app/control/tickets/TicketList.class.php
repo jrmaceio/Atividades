@@ -59,6 +59,8 @@ class TicketList extends TPage
         $responsavel_id                 = new TDBCombo('responsavel_id', 'atividade', 'Pessoa', 'pessoa_codigo', 'pessoa_nome', 'pessoa_nome', $criteria);
         
         $prioridade_id                  = new TDBCombo('prioridade_id', 'atividade', 'Prioridade', 'id', 'nome');
+        
+        $sistema_id                     = new TDBCombo('sistema_id', 'atividade', 'Sistema', 'id', 'nome', 'nome');
 
         // define the sizes
         $id->setSize(50);
@@ -68,6 +70,7 @@ class TicketList extends TPage
         $entcodent->setSize(274);
         $status_ticket_id->setSize(100);
         $tipo_ticket_id->setSize(200);
+        $sistema_id->setSize(200);
         $responsavel_id->setSize(274);
         $prioridade_id->setSize(100);
 
@@ -78,17 +81,19 @@ class TicketList extends TPage
         $table->addRowSet( new TLabel('Entidade:'), $entcodent );
         $table->addRowSet( new TLabel('Responsável:'), $responsavel_id );
         $table->addRowSet( new TLabel('Tipo Ticket:'), $tipo_ticket_id );
+        $table->addRowSet( new TLabel('Sistema:'), $sistema_id );
         $table->addRowSet( new TLabel('Status:'), $status_ticket_id );
         $table->addRowSet( new TLabel('Prioridade:'), $prioridade_id );
 
-        $this->form->setFields(array($id,$titulo,$solicitante_id,$solicitante_nome,$entcodent,$status_ticket_id,$tipo_ticket_id,$responsavel_id,$prioridade_id));
+
+        $this->form->setFields(array($id,$titulo,$solicitante_id,$solicitante_nome,$entcodent,$status_ticket_id,$tipo_ticket_id,$responsavel_id,$prioridade_id, $sistema_id ));
 
         // keep the form filled during navigation with session data
         $this->form->setData( TSession::getValue('Ticket_filter_data') );
         
         // create two action buttons to the form
         $find_button = TButton::create('find', array($this, 'onSearch'), _t('Find'), 'ico_find.png');
-        $new_button  = TButton::create('new',  array('TicketForm', 'onEdit'), _t('New'), 'ico_new.png');
+        $new_button  = TButton::create('new',  array('TicketForm', 'onEdit'), _t('New'), 'fa:plus-square green');
         $clean_button  = TButton::create('clean',  array($this, 'onClean'), 'Limpar', 'ico_close.png');
         
         $this->form->addField($find_button);
@@ -152,7 +157,7 @@ class TicketList extends TPage
         // creates two datagrid actions
         $action1 = new TDataGridAction(array('TicketForm', 'onEdit'));
         $action1->setLabel(_t('Edit'));
-        $action1->setImage('ico_edit.png');
+        $action1->setImage('fa:pencil-square-o blue fa-lg');
         $action1->setField('id');
         
         // add the actions to the datagrid
@@ -226,6 +231,7 @@ class TicketList extends TPage
         TSession::setValue('TicketList_filter_tipo_ticket_id',   NULL);
         TSession::setValue('TicketList_filter_responsavel_id',   NULL);
         TSession::setValue('TicketList_filter_prioridade_id',   NULL);
+        TSession::setValue('TicketList_filter_sistema_id',   NULL);
 
         if (isset($data->id) AND ($data->id)) {
             $filter = new TFilter('id', '=', "$data->id"); // create the filter
@@ -276,10 +282,14 @@ class TicketList extends TPage
             TSession::setValue('TicketList_filter_responsavel_id',   $filter); // stores the filter in the session
         }
 
-
         if (isset($data->prioridade_id) AND ($data->prioridade_id)) {
             $filter = new TFilter('prioridade_id', '=', "$data->prioridade_id"); // create the filter
             TSession::setValue('TicketList_filter_prioridade_id',   $filter); // stores the filter in the session
+        }
+        
+        if (isset($data->sistema_id) AND ($data->sistema_id)) {
+            $filter = new TFilter('sistema_id', '=', "$data->sistema_id"); // create the filter
+            TSession::setValue('TicketList_filter_sistema_id',   $filter); // stores the filter in the session
         }
         
         // fill the form with data again
@@ -358,6 +368,10 @@ class TicketList extends TPage
 
             if (TSession::getValue('TicketList_filter_prioridade_id')) {
                 $criteria->add(TSession::getValue('TicketList_filter_prioridade_id')); // add the session filter
+            }
+            
+            if (TSession::getValue('TicketList_filter_sistema_id')) {
+                $criteria->add(TSession::getValue('TicketList_filter_sistema_id')); // add the session filter
             }
             
             // load the objects according to criteria
@@ -468,6 +482,7 @@ class TicketList extends TPage
         TSession::setValue('TicketList_filter_tipo_ticket_id',   NULL);
         TSession::setValue('TicketList_filter_responsavel_id',   NULL);
         TSession::setValue('TicketList_filter_prioridade_id',   NULL);
+        TSession::setValue('TicketList_filter_sistema_id',   NULL);
          
         $this->form->clear();
 

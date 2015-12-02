@@ -257,8 +257,7 @@ class TSelect extends TField implements AdiantiWidgetInterface
                 }
                 
                 $string_action = $this->changeAction->serialize(FALSE);
-                $this->setProperty('changeaction', "serialform=(\$('#{$this->formName}').serialize());
-                                              __adianti_ajax_lookup('$string_action&'+serialform, this)", FALSE);
+                $this->setProperty('changeaction', "__adianti_post_lookup('{$this->formName}', '{$string_action}', this)");
                 $this->setProperty('onChange', $this->getProperty('changeaction'));
             }
         }

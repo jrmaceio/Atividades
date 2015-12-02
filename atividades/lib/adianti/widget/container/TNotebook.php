@@ -137,7 +137,10 @@ class TNotebook
         $pages = $this->getPageCount();
         
         $container = new TElement('div');
-        $container->{'style'} = "width:{$this->width}px";
+        if ($this->width)
+        {
+            $container->{'style'} = ";min-width:{$this->width}px";
+        }
         $container->{'class'} = 'tnotebook';
         
         $ul = new TElement('ul');
@@ -145,7 +148,10 @@ class TNotebook
         $container->add($ul);
         
         $space = new TElement('div');
-        $space->{'style'} = "width:{$this->width}px";
+        if ($this->width)
+        {
+            $space->{'style'} = "min-width:{$this->width}px";
+        }
         $space->{'class'} = 'spacer';
         $container->add($space);
         
@@ -196,7 +202,16 @@ class TNotebook
         
         $width = $this->width;
         $height= $this->height;// -30;
-        $quadro->{'style'} = "height:{$height}px;width:{$width}px";
+        
+        if ($width)
+        {
+            $quadro->{'style'} .= ";min-width:{$width}px";
+        }
+        
+        if($height)
+        {
+            $quadro->{'style'} .= ";min-height:{$height}px";
+        }
         
         $i = 0;
         // iterate the tabs again, now to show the content

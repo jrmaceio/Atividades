@@ -64,7 +64,7 @@ class CargaHorariaFormList extends TPage
         $this->form->addQuickFields('Carga horaria', array($qtde_horas, $qtde_minutos));
 
         // create the form actions
-        $this->form->addQuickAction(_t('Save'), new TAction(array($this, 'onSave')), 'ico_save.png');
+        $this->form->addQuickAction(_t('Save'), new TAction(array($this, 'onSave')), 'fa:floppy-o');
         $this->form->addQuickAction(_t('Find'),  new TAction(array($this, 'onReload')), 'ico_find.png');
         
         // creates a DataGrid
@@ -90,7 +90,7 @@ class CargaHorariaFormList extends TPage
         $delete_action = new TDataGridAction(array($this, 'onDelete'));
         
         // add the actions to the datagrid
-        $this->datagrid->addQuickAction(_t('Delete'), $delete_action, 'id', 'ico_delete.png');
+        $this->datagrid->addQuickAction(_t('Delete'), $delete_action, 'id', 'fa:trash-o red fa-lg');
         
         // create the datagrid model
         $this->datagrid->createModel();
@@ -257,44 +257,33 @@ class CargaHorariaFormList extends TPage
 
             $object->horario = $object->qtde_horas.':'.str_pad($object->qtde_minutos, 2, 0, STR_PAD_LEFT);
             
-            // verifica se existe carga horaria cadastrada
-            
             $criteria = new TCriteria;
             $criteria->add(new TFilter("mes", "=", $object->mes));
             $criteria->add(new TFilter("ano", "=", $object->ano));
             $repo = new TRepository('CargaHoraria');
-            $count = $repo->count($criteria);
-            
-            if($count > 0)
-            {
-                CargaHoraria::atualizaCargaHoraria($object->horario, $object->mes, $object->ano);
-                new TMessage('info', 'Registros atualizados'); // success message
-                $this->form->setData($object); // fill the form with the active record data
-            }
-            else
-            {
-                $criteria = new TCriteria;
-                $criteria->add(new TFilter("origem", "=", 1));
-                $criteria->add(new TFilter("codigo_cadastro_origem", "=", 100));
-                $criteria->add(new TFilter("ativo", "=", 1));
-                $criteria->add(new TFilter("usuario", "is not "));
-                
-                $repo = new TRepository('Pessoa');
-                $pessoas = $repo->load($criteria);
-    
-                foreach($pessoas as $pessoa)
-                {
-                    $cargaHoraria = new CargaHoraria();
-                    $cargaHoraria->mes = $object->mes;
-                    $cargaHoraria->ano = $object->ano;
-                    $cargaHoraria->horario = $object->horario;
-                    $cargaHoraria->colaborador_id = $pessoa->pessoa_codigo;
+            $horarios = $repo->delete($criteria);
                     
-                    $cargaHoraria->store(); // stores the object               
-                }
-                new TMessage('info', 'Registros salvos'); // success message
-                $this->form->setData($object); // fill the form with the active record data
+            $criteria = new TCriteria;
+            $criteria->add(new TFilter("origem", "=", 1));
+            $criteria->add(new TFilter("codigo_cadastro_origem", "=", 100));
+            $criteria->add(new TFilter("ativo", "=", 1));
+            $criteria->add(new TFilter("usuario", "is not "));
+            
+            $repo = new TRepository('Pessoa');
+            $pessoas = $repo->load($criteria);
+
+            foreach($pessoas as $pessoa)
+            {
+                $cargaHoraria = new CargaHoraria();
+                $cargaHoraria->mes = $object->mes;
+                $cargaHoraria->ano = $object->ano;
+                $cargaHoraria->horario = $object->horario;
+                $cargaHoraria->colaborador_id = $pessoa->pessoa_codigo;
+                
+                $cargaHoraria->store(); // stores the object               
             }
+            new TMessage('info', 'Registros salvos'); // success message
+            $this->form->setData($object); // fill the form with the active record data
             
             TTransaction::close(); // close the transaction
             

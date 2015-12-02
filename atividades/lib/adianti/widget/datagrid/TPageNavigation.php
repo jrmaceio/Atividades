@@ -176,7 +176,7 @@ class TPageNavigation
         
         if ($first_page > 1)
         {
-            $this->action->setParameter('offset', ($first_page - $max) * $page_size);
+            $this->action->setParameter('offset', ($first_page - $max -1) * $page_size);
             $this->action->setParameter('limit',  $page_size);
             $this->action->setParameter('direction', $this->direction);
             $this->action->setParameter('page',   $first_page - $max);

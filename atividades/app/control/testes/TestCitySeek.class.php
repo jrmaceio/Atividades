@@ -75,7 +75,7 @@ class TestCitySeek extends TWindow
         // create one datagrid action
         $action1 = new TDataGridAction(array($this, 'onSelect'));
         $action1->setLabel('Selecionar');
-        $action1->setImage('ico_apply.png');
+        $action1->setImage('fa:check-circle-o green');
         $action1->setField('pessoa_codigo');
         
         // add the action to the datagrid

@@ -1,7 +1,8 @@
-function tmultisearch_start( id, minlen, maxsize, placeholder, multiple, preload_items, width, height, load_data ) {
+function tmultisearch_start( id, minlen, maxsize, placeholder, multiple, preload_items, width, height, load_data, callback ) {
     $('#'+id).select2( {
         minimumInputLength: minlen,
         maximumSelectionSize: maxsize,
+        allowClear: true,
         separator: '||',
         placeholder: placeholder,
         multiple: multiple,
@@ -18,11 +19,37 @@ function tmultisearch_start( id, minlen, maxsize, placeholder, multiple, preload
             query.callback(data);
         }
     });
+    
+    if (typeof callback != 'undefined')
+    {
+        $('#'+id).on("change", function (e) {
+            callback();
+        });
+    }
+    
     $('#s2id_'+id+ '> .select2-choices').height(height).width(width).css('overflow-y','auto');
     
     if (typeof load_data !== "undefined") {
         $('#'+id).select2("data", load_data);
     }
+}
+
+function tmultisearch_get_form_data(formName, fieldName) {
+    element = $('input[name='+fieldName+'][component="multisearch"]')[0];
+    return $('#'+formName+' :input[name!="'+fieldName+'"]').serialize() + '&' + $.param(tmultisearch_get_value(element));
+}
+
+function tmultisearch_get_value(element) {
+    var fieldName = element.name;
+    var select_ids = [];
+    rows = element.value.split('||');
+    $(rows).each(function(i) {
+        item = this.split('::');
+        select_ids.push( item[0] );
+    });
+    data = new Object;
+    data[fieldName] = select_ids;
+    return data;
 }
 
 function tmultisearch_enable_field(form_name, field) {

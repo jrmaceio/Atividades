@@ -61,7 +61,7 @@ class PontoReport extends TPage
         $output_type->setValue('html');
         $output_type->setLayout('horizontal');
         
-        $generate_button = TButton::create('generate', array($this, 'onGenerate'), _t('Generate'), 'ico_apply.png');
+        $generate_button = TButton::create('generate', array($this, 'onGenerate'), _t('Generate'), 'fa:check-circle-o green');
         $this->form->addField($generate_button);
         
         // add a row for the form action

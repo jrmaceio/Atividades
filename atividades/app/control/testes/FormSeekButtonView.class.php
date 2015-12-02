@@ -49,7 +49,7 @@ class FormSeekButtonView extends TPage
         
         $this->form->addQuickFields('Manual SeekButton', array($city_id1, $city_name1));
        
-        $this->form->addQuickAction('Save', new TAction(array($this, 'onSave')), 'ico_save.png');
+        $this->form->addQuickAction('Save', new TAction(array($this, 'onSave')), 'fa:floppy-o');
         
         // wrap the page content using vertical box
         $vbox = new TVBox;

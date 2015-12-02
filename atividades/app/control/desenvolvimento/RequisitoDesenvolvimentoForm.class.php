@@ -87,11 +87,11 @@ class RequisitoDesenvolvimentoForm extends TPage
         $this->form->setFields(array($id,$titulo,$data_cadastro,$rotina,$objetivo,$entrada,$processamento,$saida,$ticket_id, $ticket_titulo));
 
         // create the form actions
-        $save_button = TButton::create('save', array($this, 'onSave'), _t('Save'), 'ico_save.png');
-        $list_button   = TButton::create('list', array('RequisitoDesenvolvimentoList', 'onReload'), _t('List'), 'ico_datagrid.png');
+        $save_button = TButton::create('save', array($this, 'onSave'), _t('Save'), 'fa:floppy-o');
+        $list_button   = TButton::create('list', array('RequisitoDesenvolvimentoList', 'onReload'), _t('List'), 'fa:table blue');
         
-        $gerar_dtr = TButton::create('gerar_dtr', array($this, 'onGenerate'), 'Gerar DTr', 'ico_save.png');
-        $gerar_kanban = TButton::create('gerar_kanban', array($this, 'onGenerateKanban'), 'Gerar Kanban', 'ico_save.png');
+        $gerar_dtr = TButton::create('gerar_dtr', array($this, 'onGenerate'), 'Gerar DTr', 'fa:floppy-o');
+        $gerar_kanban = TButton::create('gerar_kanban', array($this, 'onGenerateKanban'), 'Gerar Kanban', 'fa:floppy-o');
 
         TButton::disableField('form_RequisitoDesenvolvimento', 'save');
         TButton::disableField('form_RequisitoDesenvolvimento', 'gerar_dtr');

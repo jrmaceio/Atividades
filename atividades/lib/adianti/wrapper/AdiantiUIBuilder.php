@@ -51,6 +51,7 @@ use SimpleXMLElement;
  * @author     Pablo Dall'Oglio
  * @copyright  Copyright (c) 2006-2014 Adianti Solutions Ltd. (http://www.adianti.com.br)
  * @license    http://www.adianti.com.br/framework-license
+ * @alias      TUIBuilder
  */
 class AdiantiUIBuilder extends TPanel
 {
@@ -860,7 +861,6 @@ class AdiantiUIBuilder extends TPanel
     private function parseElement($xml)
     {
         $errors = array();
-        $widget = NULL;
         $widgets = array();
         
         foreach ($xml as $object)
@@ -875,6 +875,7 @@ class AdiantiUIBuilder extends TPanel
                 }
                 $properties = (object)$properties;
                 
+                $widget = NULL;
                 switch ($class)
                 {
                     case 'T'.'Label':

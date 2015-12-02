@@ -49,8 +49,15 @@ class TMessage
         $modal_header = new TElement('div');
         $modal_header->{'class'} = 'modal-header';
         
-        $image = new TImage("lib/adianti/images/{$type}.png");
-        $image->{'style'} = 'float:left';
+        if ($type=='info')
+        {
+            $image = new TImage("fa:fa fa-info-circle fa-5x blue");
+        }
+        else
+        {
+            $image = new TImage("fa:fa fa-exclamation-circle fa-5x red");
+        }
+        $image->{'style'} = 'float:left; margin-right: 10px;';
         
         $close = new TElement('button');
         $close->{'type'} = 'button';
@@ -65,11 +72,11 @@ class TMessage
         $title->add( $title_msg ? $title_msg : ( $type == 'info' ? AdiantiCoreTranslator::translate('Information') : AdiantiCoreTranslator::translate('Error')));
         
         $body = new TElement('div');
+        $body->{'style'} = 'text-align:left';
         $body->{'class'} = 'modal-body';
         $body->add($image);
         
         $span = new TElement('span');
-        $span->{'style'} = 'margin-left:20px;float:left; display:inline-block';
         $span->add($message);
         
         $body->add($span);

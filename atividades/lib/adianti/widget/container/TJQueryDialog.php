@@ -188,7 +188,7 @@ class TJQueryDialog extends TElement
      */
     public static function closeAll()
     {
-        if (!isset($_GET['ajax_lookup']) OR $_GET['ajax_lookup'] !== '1')
+        if (!isset($_REQUEST['ajax_lookup']) OR $_REQUEST['ajax_lookup'] !== '1')
         {
             // it has to be inline (not external function call)
             TScript::create( ' $(\'[widget="TWindow"]\').remove(); ' );

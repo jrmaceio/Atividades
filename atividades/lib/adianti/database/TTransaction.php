@@ -3,8 +3,7 @@ namespace Adianti\Database;
 
 use Adianti\Database\TConnection;
 use Adianti\Log\TLogger;
-use Psr\Log\LoggerInterface;
-use Psr\Log\LoggerAwareInterface;
+use Adianti\Log\AdiantiLoggerInterface;
 use PDO;
 use Closure;
 
@@ -17,7 +16,7 @@ use Closure;
  * @copyright  Copyright (c) 2006-2014 Adianti Solutions Ltd. (http://www.adianti.com.br)
  * @license    http://www.adianti.com.br/framework-license
  */
-final class TTransaction implements LoggerAwareInterface
+final class TTransaction
 {
     private static $conn;     // active connection
     private static $logger;   // Logger object
@@ -119,7 +118,10 @@ final class TTransaction implements LoggerAwareInterface
         if (self::$conn[self::$counter])
         {
             $driver = self::$conn[self::$counter]->getAttribute(PDO::ATTR_DRIVER_NAME);
-            if ($driver !== 'dblib')
+            $info = self::getDatabaseInfo();
+            $fake = isset($info['fake']) ? $info['fake'] : FALSE;
+            
+            if ($driver !== 'dblib' AND !$fake)
             {
                 // apply the pending operations
                 self::$conn[self::$counter]->commit();
@@ -150,7 +152,7 @@ final class TTransaction implements LoggerAwareInterface
      * Assign a Logger strategy
      * @param $logger A TLogger child object
      */
-    public static function setLogger(LoggerInterface $logger)
+    public static function setLogger(AdiantiLoggerInterface $logger)
     {
         if (isset(self::$conn[self::$counter]))
         {
@@ -177,7 +179,7 @@ final class TTransaction implements LoggerAwareInterface
             // avoid recursive log
             self::$logger[self::$counter] = NULL;
             
-            if ($log instanceof LoggerInterface)
+            if ($log instanceof AdiantiLoggerInterface)
             {
                 // call log method
                 $log->write($message);

@@ -27,12 +27,19 @@ class TFile extends TField implements AdiantiWidgetInterface
     protected $id;
     protected $height;
     protected $completeAction;
+    protected $uploaderClass;
     
     public function __construct($name)
     {
         parent::__construct($name);
         $this->id = $this->name . '_' . mt_rand(1000000000, 1999999999);
         $this->height = 25;
+        $this->uploaderClass = 'AdiantiUploaderService';
+    }
+    
+    public function setService($service)
+    {
+        $this->uploaderClass = $service;
     }
     
     public function setSize($width, $height = NULL)
@@ -73,8 +80,7 @@ class TFile extends TField implements AdiantiWidgetInterface
                 }
                 $string_action = $this->completeAction->serialize(FALSE);
                 
-                $complete_action = "function() { serialform=(\$('#{$this->formName}').serialize());".
-                                   "__adianti_ajax_lookup('$string_action&'+serialform, this); }";
+                $complete_action = "function() { __adianti_post_lookup('{$this->formName}', '{$string_action}', this); }";
             }
         }
         else
@@ -93,8 +99,7 @@ class TFile extends TField implements AdiantiWidgetInterface
         $div->add( $this->tag );
         $div->show();
         
-        $uploaderClass = 'AdiantiUploaderService';
-        $action = "engine.php?class={$uploaderClass}";
+        $action = "engine.php?class={$this->uploaderClass}";
         TScript::create(" tfile_start( '{$this->tag-> id}', '{$action}', '{$div-> id}', {$complete_action});");
     }
     
@@ -114,6 +119,7 @@ class TFile extends TField implements AdiantiWidgetInterface
             throw new Exception(AdiantiCoreTranslator::translate('Action (^1) must be static to be used in ^2', $string_action, __METHOD__));
         }
     }
+    
     /**
      * Enable the field
      * @param $form_name Form name

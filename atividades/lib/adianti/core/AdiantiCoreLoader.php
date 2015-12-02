@@ -90,7 +90,7 @@ class AdiantiCoreLoader
         {
             if (file_exists(self::$classMap[$class]))
             {
-                //echo 'Legacy '.self::$classMap[$class] . '<br>';
+                //echo 'Classmap '.self::$classMap[$class] . '<br>';
                 require_once self::$classMap[$class];
                 
                 self::globalScope($class);

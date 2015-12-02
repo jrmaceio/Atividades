@@ -1,44 +1,36 @@
 <?php
+/**
+ * FormSeekButtonView
+ *
+ * @version    1.0
+ * @package    samples
+ * @subpackage tutor
+ * @author     Pablo Dall'Oglio
+ * @copyright  Copyright (c) 2006-2014 Adianti Solutions Ltd. (http://www.adianti.com.br)
+ * @license    http://www.adianti.com.br/framework-license
+ */
 class CommonPage extends TPage
 {
-    public function __construct()
+    
+    /**
+     * Class constructor
+     * Creates the page
+     */
+    function __construct()
     {
         parent::__construct();
-        parent::add(new TLabel('Common page'));
- 
- 
-        $string = new StringsUtil;
-         
-    	TTransaction::open('atividade');
-    	
-    	$cri = new TCriteria;
-    //	$cri->add(new TFilter("colaborador_id", "=", 1));
-    	$cri->add(new TFilter("ticket_id", "IN", array(328,514)));
-    	$cri->add(new TFilter("extract('month' from data_atividade)", "=", '10'));
-    	$cri->add(new TFilter("extract('year' from data_atividade)", "=", '2015')); 
-    	$repo = new TRepository('Atividade');
-    	$ausencias = $repo->count($cri);
-    	
-    	if($ausencias)
-    	{
-    	
-        	$horas = $repo->load($cri);
-        	
-        	foreach ($horas as $h)
-        	{
-        	    $tempo += $string->time_to_sec($h->hora_fim) - $string->time_to_sec($h->hora_inicio);
-        	    
-        	}
-        	
-        	echo $string->sec_to_time($tempo);
-        	
-    	}
-    	
-    	//echo $ausencias;
-    	TTransaction::close();
-    	
-    	
-                
+
+
+        $data1 = '2015-09-01';
+        $data2 = '2015-11-01';
+            
+        if(strtotime($data1) > strtotime($data2)){
+            echo 'erroooouuuuu';
+        }     
+            
+
+        parent::add('testes:');
     }
+       
 }
 ?>

@@ -12,7 +12,7 @@ class GeradorDescricao extends TPage
        $this->form->setFormTitle ( 'Relatorio' );
        
        $relatorio = new TAction(array($this, 'onGenerateKambam'));
-       $this->form->addQuickAction('Report', $relatorio, 'ico_new.png');   
+       $this->form->addQuickAction('Report', $relatorio, 'fa:plus-square green');   
        
        parent::add($this->form);
         

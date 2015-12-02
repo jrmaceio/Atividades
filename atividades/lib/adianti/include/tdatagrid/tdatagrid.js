@@ -18,3 +18,22 @@ function tdatagrid_add_serialized_row(datagrid, row)
 {
     $('#'+datagrid+' > tbody:last-child').append(row);
 }
+
+function tdatagrid_enable_groups()
+{
+    $('table.tdatagrid_table tr[level]').not('[x=1]')
+        .css("cursor","pointer")
+        .attr("x","1")
+        .click(function(){
+            if (!$(this).data('child-visible')) {
+                $(this).data('child-visible', false);
+            }
+            $(this).data('child-visible', !$(this).data('child-visible'));
+            if ($(this).data('child-visible')) {
+                    $(this).siblings('[childof^="'+$(this).attr('level')+'"]').hide('fast');
+                }
+                else {
+                    $(this).siblings('[childof^="'+$(this).attr('level')+'"]').show('fast');
+                }
+        });
+}

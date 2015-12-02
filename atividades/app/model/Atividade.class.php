@@ -31,6 +31,85 @@ class Atividade extends TRecord
         parent::addAttribute('sistema_id');
     }
 
+    public function retornaClientesPeriodo($colaborador, $dataInicial, $dataFinal, $tickets)
+    {
+        $tic = "";
+        if($tickets)
+        {
+            $tic = " and a.ticket_id IN ({$tickets}) ";
+        }
+        
+        $col = "";
+        if($colaborador > 0)
+        {
+            $col = " and a.colaborador_id = {$colaborador} ";
+ 
+        }
+        
+        $conn = TTransaction::get();
+        
+        $result = $conn->query("select distinct(t.solicitante_id), sum(a.hora_fim - a.hora_inicio)
+                               from atividade as a 
+                               inner join ticket as t on a.ticket_id = t.id
+                               where a.data_atividade between '{$dataInicial}' and '{$dataFinal}' and a.ticket_id not in (328, 514) {$col} {$tic}
+                               group by t.solicitante_id");
+        
+        return $result;    
+    }
+
+    public function retornaSistemasPeriodo($colaborador, $dataInicial, $dataFinal, $tickets)
+    {
+        $tic = "";
+        if($tickets)
+        {
+            $tic = " and a.ticket_id IN ({$tickets}) ";
+        }
+        
+        $col = "";
+        if($colaborador > 0)
+        {
+            $col = " and a.colaborador_id = {$colaborador} ";
+ 
+        }
+        
+        $conn = TTransaction::get();
+        
+        $result = $conn->query("select distinct(a.sistema_id) , s.nome
+                                from atividade as a 
+                                inner join sistema as s on a.sistema_id = s.id
+                                where a.data_atividade between '{$dataInicial}' and '{$dataFinal}' and a.ticket_id not in (328, 514) {$col} {$tic}
+                                order by s.nome");
+        
+        return $result;    
+    }
+
+
+    public function retornaTiposAtividadesPeriodo($colaborador, $dataInicial, $dataFinal, $tickets)
+    {
+        
+        $tic = "";
+        if($tickets)
+        {
+            $tic = " and a.ticket_id IN ({$tickets}) ";
+        }
+        
+        $col = "";
+        if($colaborador > 0)
+        {
+            $col = " and a.colaborador_id = {$colaborador} ";
+        }
+        
+        $conn = TTransaction::get();
+        $result = $conn->query("select distinct(a.tipo_atividade_id) , t.nome
+                                from atividade as a 
+                                inner join tipo_atividade as t on a.tipo_atividade_id = t.id
+                                where a.data_atividade between '{$dataInicial}' and '{$dataFinal}' and a.tipo_atividade_id not in (17, 10) {$col} {$tic}
+                                order by t.nome");
+        
+        return $result;    
+    }
+
+
     public function retornaDiasAtividades($dataInicial, $dataFinal)
     {
         $conn = TTransaction::get();
@@ -58,6 +137,8 @@ class Atividade extends TRecord
         
         $result = $conn->query("select sum((a.hora_fim - a.hora_inicio)) as total from atividade as a
                                 where extract('month' from a.data_atividade) = {$mes} and extract('year' from a.data_atividade) = {$ano} and a.ticket_id not in (328, 514) {$col} {$tic}");
+        
+        $data = null;
         
         foreach ($result as $row)
         {
@@ -91,10 +172,65 @@ class Atividade extends TRecord
                                 group by tipo_atividade_id, nome
                                 order by nome
                                 ");
-        
+                
         return $result;
         
     }
+
+    public function retornaAtestados($colaborador, $mes, $ano)
+    {
+        
+        $col = "";
+        if($colaborador > 0)
+        {
+            $col = " and a.colaborador_id = {$colaborador} ";
+ 
+        }
+        
+        $conn = TTransaction::get();
+        $result = $conn->query("select sum((a.hora_fim - a.hora_inicio)) as total, ticket_id from atividade as a
+                                where extract('month' from a.data_atividade) = {$mes} and extract('year' from a.data_atividade) = {$ano} and a.ticket_id = 328  {$col} 
+                                group by ticket_id 
+                                order by ticket_id");
+        
+        $data = null;
+        
+        foreach ($result as $row)
+        {
+            $data = $row['total'];
+        }
+
+        return $data;   
+        
+    }
+    
+    public function retornaAusencias($colaborador, $mes, $ano)
+    {
+        
+        $col = "";
+        if($colaborador > 0)
+        {
+            $col = " and a.colaborador_id = {$colaborador} ";
+ 
+        }
+        
+        $conn = TTransaction::get();
+        $result = $conn->query("select sum((a.hora_fim - a.hora_inicio)) as total, ticket_id from atividade as a
+                                where extract('month' from a.data_atividade) = {$mes} and extract('year' from a.data_atividade) = {$ano} and a.ticket_id = 514 {$col} 
+                                group by ticket_id 
+                                order by ticket_id");
+        
+        $data = null;
+        
+        foreach ($result as $row)
+        {
+            $data = $row['total'];
+        }
+
+        return $data;     
+        
+    }
+
     
     public function retornaAtestadosMedicos($colaborador, $mes, $ano)
     {

@@ -39,8 +39,8 @@ class SistemaFormList extends TPage
 
 
         // create the form actions
-        $this->form->addQuickAction(_t('Save'), new TAction(array($this, 'onSave')), 'ico_save.png');
-        $this->form->addQuickAction(_t('New'),  new TAction(array($this, 'onEdit')), 'ico_new.png');
+        $this->form->addQuickAction(_t('Save'), new TAction(array($this, 'onSave')), 'fa:floppy-o');
+        $this->form->addQuickAction(_t('New'),  new TAction(array($this, 'onEdit')), 'fa:plus-square green');
         
         // creates a DataGrid
         $this->datagrid = new TQuickGrid;
@@ -57,8 +57,8 @@ class SistemaFormList extends TPage
         $delete_action = new TDataGridAction(array($this, 'onDelete'));
         
         // add the actions to the datagrid
-        $this->datagrid->addQuickAction(_t('Edit'), $edit_action, 'id', 'ico_edit.png');
-        $this->datagrid->addQuickAction(_t('Delete'), $delete_action, 'id', 'ico_delete.png');
+        $this->datagrid->addQuickAction(_t('Edit'), $edit_action, 'id', 'fa:pencil-square-o blue fa-lg');
+        $this->datagrid->addQuickAction(_t('Delete'), $delete_action, 'id', 'fa:trash-o red fa-lg');
         
         // create the datagrid model
         $this->datagrid->createModel();
