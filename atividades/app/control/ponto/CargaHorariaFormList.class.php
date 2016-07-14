@@ -32,7 +32,7 @@ class CargaHorariaFormList extends TPage
         $mes->setValue(date('m'));
         $mes->setSize(100);
         $ano                            = new TCombo('ano');
-        $anos                           = array(2015 => '2015');         
+        $anos                           = array(2015 => '2015' , 2016 => '2016');         
         $ano->addItems($anos);
         $ano->setDefaultOption(FALSE);
         $ano->setSize(70);  

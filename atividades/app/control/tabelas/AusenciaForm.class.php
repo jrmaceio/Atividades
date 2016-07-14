@@ -42,7 +42,7 @@ class AusenciaForm extends TPage
         $criteria->add(new TFilter("usuario", "is not "));
         $colaborador_id                 = new TDBCombo('colaborador_id', 'atividade', 'Pessoa', 'pessoa_codigo', 'pessoa_nome', 'pessoa_nome', $criteria);
         $criteria = new TCriteria;
-        $criteria->add(new TFilter("id", "in", array(10,17)));
+        $criteria->add(new TFilter("id", "in", array(10,17,20)));
         $tipo_atividade_id              = new TDBCombo('tipo_atividade_id', 'atividade', 'TipoAtividade', 'id', 'nome', 'nome', $criteria);
         $tipo_atividade_id->setDefaultOption(FALSE);
         $data_inicial                   = new TDate('data_inicial');

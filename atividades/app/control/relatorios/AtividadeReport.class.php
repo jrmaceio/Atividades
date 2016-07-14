@@ -48,8 +48,7 @@ class AtividadeReport extends TPage
         $pessoas = $repo->load($criteria);
            
         $arrayPessoas[-1] = 'TODOS COLABORADORES';
-        foreach($pessoas as $pessoa)
-        {
+        foreach($pessoas as $pessoa) {
             $arrayPessoas[$pessoa->pessoa_codigo] = $pessoa->pessoa_nome;
         }
            
@@ -63,8 +62,7 @@ class AtividadeReport extends TPage
         $clientes = $repo->load($criteria);
            
         $arrayClientes[-1] = 'TODOS CLIENTES';
-        foreach($clientes as $cliente)
-        {
+        foreach($clientes as $cliente) {
             $arrayClientes[$cliente->entcodent] = str_pad($cliente->entcodent, 4, '0', STR_PAD_LEFT).' - '.$cliente->entrazsoc;
         }
         $arrayClientes[999] = 'ECS 999';
@@ -89,10 +87,12 @@ class AtividadeReport extends TPage
         
         $ano_atividade                  = new TCombo('ano_atividade');
         $anos = array(
-                            2015 => '2015'
+                            2015 => '2015',
+                            2016 => '2016'
                       );         
         $ano_atividade->addItems($anos);
-        $ano_atividade->setDefaultOption(FALSE);       
+        $ano_atividade->setDefaultOption(FALSE);
+        $ano_atividade->setValue(date('Y'));       
  
         $output_type                    = new TRadioGroup('output_type');
 
@@ -125,28 +125,29 @@ class AtividadeReport extends TPage
         parent::add($this->form);
     }
 
-    function retornaPonto($user, $mes)
+    function retornaPonto($user, $mes, $ano)
     {
-        $ano = date("Y"); // Ano atual
         $ultimo_dia = date("t", mktime(0,0,0,$mes,'01',$ano));
         $totalPonto = null;
         
-        for ($dia = 1; $dia <= $ultimo_dia; $dia++)
+        $inicio = $ano.'-'.$mes.'-01';
+        $final  = $ano.'-'.$mes.'-'.$ultimo_dia;
+        
+        $criteria = new TCriteria;
+        
+        $criteria->add(new TFilter("data_ponto", "between", $inicio),  TExpression::AND_OPERATOR);        
+        $criteria->add(new TFilter("", "", $final),  TExpression::AND_OPERATOR);
+        $criteria->add(new TFilter("colaborador_id", "=", $user),          TExpression::AND_OPERATOR);
+        
+        $repo = new TRepository('Ponto');
+        $pontos = $repo->load($criteria);
+
+        $horario = new CalculoHorario;
+           
+        foreach($pontos as $ponto)
         {
-        
-            $data = $ano.'-'.$mes.'-'.$dia;
-            $ponto = Ponto::retornaTempoPonto($user, $data);
-                        
-            $total = new DateTime($ponto);
-            $almoco = new DateTime('01:00:00');
-            $limite = new DateTime('06:00:00');
-            if($total > $limite)
-            {
-                $ponto = $total->diff($almoco)->format('%H:%I:%S');
-            }
-            
-            $totalPonto += $this->string->time_to_sec($ponto);
-        
+            $horaPonto = $horario->retornoCargaHorariaDiaria($ponto);                                 
+            $totalPonto += $this->string->time_to_sec($horaPonto.':00');
         }
         
         return $this->string->sec_to_time($totalPonto);
@@ -216,7 +217,7 @@ class AtividadeReport extends TPage
                     $colaborador = new Pessoa($formdata->colaborador_id);
                     $titulo = utf8_decode($colaborador->pessoa_nome);
                     
-                    $totalPonto = $this->retornaPonto($formdata->colaborador_id, $formdata->mes_atividade);
+                    $totalPonto = $this->retornaPonto($formdata->colaborador_id, $formdata->mes_atividade, $formdata->ano_atividade);
                     
                     $criteria     = new TCriteria;
                     $criteria->add(new TFilter("mes",             "=", $formdata->mes_atividade));
@@ -255,7 +256,7 @@ class AtividadeReport extends TPage
                 
                     foreach($pessoas as $pessoa)
                     {
-                        $totalPonto += $this->string->time_to_sec($this->retornaPonto($pessoa->pessoa_codigo, $formdata->mes_atividade));
+                        $totalPonto += $this->string->time_to_sec($this->retornaPonto($pessoa->pessoa_codigo, $formdata->mes_atividade, $formdata->ano_atividade));
                     }                
                     
                     $horario     = $this->string->sec_to_time($horario);
@@ -440,20 +441,26 @@ class AtividadeReport extends TPage
                 $tr->addRow();
                 $tr->addCell($break, 'center', 'datai', 4);
                 
-                $objects = Atividade::retornaAtividadesClienteColaborador($formdata->colaborador_id, $formdata->mes_atividade, $formdata->ano_atividade, $tickets);
+                $objects = Atividade::retornaAtividadesClienteColaborador($formdata->colaborador_id, $formdata->mes_atividade, $formdata->ano_atividade, $tickets, 1);
                 foreach ($objects as $row)
                 {
                     $cliente = new Pessoa($row['solicitante_id']);  
-                    if($cliente->origem == 1)
-                    {
+                    if($cliente->origem == 1) {
                         $ind = $cliente->codigo_cadastro_origem;
-                    }
-                    else
-                    {
+                    } elseif ($cliente->origem == 2) {
                         $ind = 999;
+                    } elseif ($cliente->origem == 3) {
+                        $ind = 1000 + $cliente->codigo_cadastro_origem;
                     }
                     $array[$ind] += $this->string->time_to_sec($row['total']); 
                 }
+                
+                $objects = Atividade::retornaAtividadesClienteColaborador($formdata->colaborador_id, $formdata->mes_atividade, $formdata->ano_atividade, $tickets, 2);
+                foreach ($objects as $row)
+                {
+                    $array[777] += $this->string->time_to_sec($row['total']); 
+                }
+                
                 ksort($array);
                 // add a header row
                 $tr->addRow();
@@ -464,17 +471,33 @@ class AtividadeReport extends TPage
                 // controls the background filling
                 $colour= FALSE;
                 $seq = 1;
+                $empresas= FALSE;
                 // data rows
                 foreach ($array as $key => $value)
                 {
-                    if($key < 999)
+                    if($key < 777)
                     {
                         $etd = new Entidade($key);
                         $nome = $key.' - '.$etd->entnomfan;       
-                    }
-                    else
-                    {
-                        $nome = $key.' - ECS';
+                    } elseif ($key == 777) {
+                        $nome = '777 - ASSOCIADO';
+                    } elseif ($key == 999) {
+                        $nome = '999 - ECS';
+                    } else {
+                        $codemp = $key - 1000;
+                        $emp = new Empresa($codemp);
+                        $nome = $key.' - '.$emp->razao_social;
+                        if(!$empresas){
+                            $tr->addRow();
+                            $tr->addCell('', 'right', 'footer');
+                            $tr->addCell('EMPRESAS:', 'left', 'footer');
+                            $tr->addCell('', 'right', 'footer');
+                            $tr->addCell('', 'right', 'footer');                                
+                                    
+                            $empresas= TRUE;
+                        }
+                        
+                        
                     }
                     $style = $colour ? 'datap' : 'datai';
                     $tr->addRow();

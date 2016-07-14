@@ -38,6 +38,7 @@ class Ticket extends TRecord
         parent::addAttribute('data_aprovacao');
         parent::addAttribute('observacao');
         parent::addAttribute('solicitante_id');
+        parent::addAttribute('proprietario_id');
         parent::addAttribute('responsavel_id');
         parent::addAttribute('tipo_ticket_id');
         parent::addAttribute('sistema_id');
@@ -84,6 +85,9 @@ class Ticket extends TRecord
                                        coalesce(sum(a.hora_fim - a.hora_inicio), '00:00:00') as horas_atividade,
                                        (coalesce(t.orcamento_horas, '00:00:00') - coalesce(sum(a.hora_fim - a.hora_inicio), '00:00:00')) as horas_saldo,
                                        t.data_prevista,
+                                       t.data_cadastro,
+                                       t.data_encerramento,
+                                       t.data_cancelamento,
                                        t.titulo,
                                        t.responsavel_id,
                                        t.origem,
@@ -146,6 +150,23 @@ class Ticket extends TRecord
         return $retorno; 
         
     }
+    
+    public function retornaClientesTickets()
+    {
+        $conn = TTransaction::get();
+        
+        $result = $conn->query("select distinct(solicitante_id) from ticket");
+        
+        $retorno = array();
+        
+        foreach($result as $row)
+        {
+            $retorno[] = $row[0];
+        }
+        
+        return $retorno;    
+    }
+    
     
     public function getNaoUsados()
     {

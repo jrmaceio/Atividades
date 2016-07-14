@@ -20,14 +20,22 @@ class CommonPage extends TPage
     {
         parent::__construct();
 
-
-        $data1 = '2015-09-01';
-        $data2 = '2015-11-01';
-            
-        if(strtotime($data1) > strtotime($data2)){
-            echo 'erroooouuuuu';
-        }     
-            
+        TTransaction::open('atividade');
+     
+        $param['id'] = '';     
+     
+        if($param['id']){
+            $pd = new PessoaDepartamento($param['id']);
+        } else {
+            $pd = new PessoaDepartamento();
+        }
+     
+        $pd->departamento_id     = $param['departamento_id'];
+        $pd->colaborador_id      = $param['colaborador_id'];
+     
+        $pd->store();
+        
+        TTransaction::close();
 
         parent::add('testes:');
     }

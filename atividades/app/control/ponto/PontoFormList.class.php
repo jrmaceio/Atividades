@@ -35,12 +35,43 @@ class PontoFormList extends TPage
         $change_data_action = new TAction(array($this, 'onChangeDataAction'));
         $data_ponto->setExitAction($change_data_action);
         
-        $hora_entrada                   = new THidden('hora_entrada');
+        $hora_entrada                   = new THidden('hora_entrada');               
         $hora_saida                     = new THidden('hora_saida');
+        $hora_entrada_tarde             = new THidden('hora_entrada_tarde');
+        $hora_saida_tarde               = new THidden('hora_saida_tarde');
+        
         $qtde_horas                     = new TCombo('qtde_horas');
+        $change_qtde_horas = new TAction(array($this, 'onChangeHoraEntradaPrimeiroTurno'));
+        $qtde_horas->setChangeAction($change_qtde_horas);
+        
         $qtde_minutos                   = new TCombo('qtde_minutos');
+        $change_qtde_minutos = new TAction(array($this, 'onChangeMinutoEntradaPrimeiroTurno'));
+        $qtde_minutos->setChangeAction($change_qtde_minutos);
+        
         $qtde_horas_final               = new TCombo('qtde_horas_final');
+        $change_qtde_horas_final = new TAction(array($this, 'onChangeHoraSaidaPrimeiroTurno'));
+        $qtde_horas_final->setChangeAction($change_qtde_horas_final);
+        
         $qtde_minutos_final             = new TCombo('qtde_minutos_final');
+        $change_qtde_minutos_final = new TAction(array($this, 'onChangeMinutoSaidaPrimeiroTurno'));
+        $qtde_minutos_final->setChangeAction($change_qtde_minutos_final);
+                
+        $qtde_horas_tarde               = new TCombo('qtde_horas_tarde');
+        $change_qtde_horas_tarde = new TAction(array($this, 'onChangeHoraEntradaSegundoTurno'));
+        $qtde_horas_tarde->setChangeAction($change_qtde_horas_tarde);
+        
+        $qtde_minutos_tarde             = new TCombo('qtde_minutos_tarde');
+        $change_qtde_minutos_tarde = new TAction(array($this, 'onChangeMinutoEntradaSegundoTurno'));
+        $qtde_minutos_tarde->setChangeAction($change_qtde_minutos_tarde);
+        
+        $qtde_horas_final_tarde         = new TCombo('qtde_horas_final_tarde');
+        $change_qtde_horas_final_tarde = new TAction(array($this, 'onChangeHoraSaidaSegundoTurno'));
+        $qtde_horas_final_tarde->setChangeAction($change_qtde_horas_final_tarde);
+        
+        $qtde_minutos_final_tarde       = new TCombo('qtde_minutos_final_tarde');
+        $change_qtde_minutos_final_tarde = new TAction(array($this, 'onChangeMinutoSaidaSegundoTurno'));
+        $qtde_minutos_final_tarde->setChangeAction($change_qtde_minutos_final_tarde);
+        
         $colaborador_id                 = new THidden('colaborador_id');
         TTransaction::open('atividade');
         $logado = Pessoa::retornaUsuario();
@@ -63,13 +94,18 @@ class PontoFormList extends TPage
              $combo_horas_final[$i]   = str_pad($i, 2, 0, STR_PAD_LEFT) ;
         }
         $combo_horas_final[19]        = ('19');
+        
         $qtde_horas->addItems($combo_horas);
-        $qtde_horas->setValue(8);
         $qtde_horas->setSize(60);
-        $qtde_horas->setDefaultOption(FALSE);
         $qtde_horas_final->addItems($combo_horas_final);
         $qtde_horas_final->setSize(60);
-        
+                
+        $qtde_horas_tarde->addItems($combo_horas);
+        $qtde_horas_tarde->setSize(60);
+        $qtde_horas_final_tarde->addItems($combo_horas_final);
+        $qtde_horas_final_tarde->setSize(60);
+                
+                
         $combo_minutos       = array();
         $combo_minutos_final = array();
         for($i = 0; $i <= 59; $i++)
@@ -78,11 +114,14 @@ class PontoFormList extends TPage
              $combo_minutos_final[$i] = str_pad($i, 2, 0, STR_PAD_LEFT) ;     
         }
         $qtde_minutos->addItems($combo_minutos);
-        $qtde_minutos->setValue(0);
         $qtde_minutos->setSize(60);
-        $qtde_minutos->setDefaultOption(FALSE);
         $qtde_minutos_final->addItems($combo_minutos_final);
         $qtde_minutos_final->setSize(60);
+                
+        $qtde_minutos_tarde->addItems($combo_minutos);
+        $qtde_minutos_tarde->setSize(60);     
+        $qtde_minutos_final_tarde->addItems($combo_minutos_final);
+        $qtde_minutos_final_tarde->setSize(60);
                 
         // validations
         $data_ponto->addValidation('Data', new TRequiredValidator);
@@ -90,12 +129,18 @@ class PontoFormList extends TPage
         // add the fields
         $this->form->addQuickField('Colaborador', $colaborador_nome,  200);
         $this->form->addQuickField('Data', $data_ponto,  100);
-        $this->form->addQuickFields('Hora entrada', array($qtde_horas, $qtde_minutos));
-        $this->form->addQuickFields('Hora saida', array($qtde_horas_final, $qtde_minutos_final));
+        $this->form->addQuickFields('1º turno entrada', array($qtde_horas, $qtde_minutos));
+        $this->form->addQuickFields('1º turno saida', array($qtde_horas_final, $qtde_minutos_final));
+        
+        $this->form->addQuickFields('2º turno entrada', array($qtde_horas_tarde, $qtde_minutos_tarde));
+        $this->form->addQuickFields('2º turno saida', array($qtde_horas_final_tarde, $qtde_minutos_final_tarde));
+        
         $this->form->addQuickField('Saldo no mês:', $saldo_horas, 125);
-        $this->form->addQuickField('% Produtividade', new TLabel('<span style="background-color: #00B4FF;"><b>> 49% satisfatoria&nbsp;&nbsp;</b></span><br/><span style="background-color: #FFF800;"><b>30%-49% - Atenção</b></span><br/><span style="background-color: #FF0000;"><b>0-29% Baixa&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b></span>'), 200);  
+        $this->form->addQuickField('% Produtividade', new TLabel('<span style="background-color: #00B4FF;"><b>> 59% satisfatoria&nbsp;&nbsp;</b></span><br/><span style="background-color: #FFF800;"><b>< 60% - Atenção</b></span>'), 200);  
         $this->form->addQuickField('', $hora_entrada,  200);
         $this->form->addQuickField('', $hora_saida,  200);
+        $this->form->addQuickField('', $hora_entrada_tarde,  200);
+        $this->form->addQuickField('', $hora_saida_tarde,  200);
         $this->form->addQuickField('', $colaborador_id,  100);
         $this->form->addQuickField('', $id,  100);
       
@@ -109,19 +154,25 @@ class PontoFormList extends TPage
         
         // creates a DataGrid
         $this->datagrid = new TQuickGrid;
-        $this->datagrid->setHeight(320);
+        $this->datagrid->setHeight(380);
         
         // creates the datagrid columns
         $data_ponto = $this->datagrid->addQuickColumn('Data', 'data_ponto', 'left', 50);
-        $hora_entrada = $this->datagrid->addQuickColumn('H.Ent', 'hora_entrada', 'left', 30);
-        $hora_saida = $this->datagrid->addQuickColumn('H.Sai', 'hora_saida', 'left', 30);
+        $hora_entrada = $this->datagrid->addQuickColumn('1º Ent', 'hora_entrada', 'left', 40);
+        $hora_saida = $this->datagrid->addQuickColumn('1º Sai', 'hora_saida', 'left', 40);
+        
+        $hora_entrada_tarde = $this->datagrid->addQuickColumn('2º Ent', 'hora_entrada_tarde', 'left', 40);
+        $hora_saida_tarde = $this->datagrid->addQuickColumn('2º Sai', 'hora_saida_tarde', 'left', 40);
+                
         $hora_ponto = $this->datagrid->addQuickColumn('H.Pto', 'hora_ponto', 'left', 30);
-        $intervalo = $this->datagrid->addQuickColumn('Atividades', 'intervalo', 'right', 30);
+        $intervalo = $this->datagrid->addQuickColumn('Ativid.', 'intervalo', 'right', 30);
         $produtividade = $this->datagrid->addQuickColumn('% prod.', 'produtividade', 'right', 55);
         
         // transformers
         $hora_entrada->setTransformer(array($this, 'tiraSegundos'));
         $hora_saida->setTransformer(array($this, 'tiraSegundos'));
+        $hora_entrada_tarde->setTransformer(array($this, 'tiraSegundos'));
+        $hora_saida_tarde->setTransformer(array($this, 'tiraSegundos'));
         $hora_ponto->setTransformer(array($this, 'calculaDiferenca'));
         $intervalo->setTransformer(array($this, 'retornaIntervalo'));
         $produtividade->setTransformer(array($this, 'calculaPercentualProdutividade'));
@@ -152,6 +203,206 @@ class PontoFormList extends TPage
         // create the page container
         $container = TVBox::pack( $this->form, $this->datagrid, $this->pageNavigation);
         parent::add($container);
+    }
+
+    public static function onChangeHoraSaidaSegundoTurno($param)
+    {
+        TButton::enableField('form_Ponto', 'salvar');
+        if(is_numeric($param['qtde_horas_final_tarde'])){
+            $obj = new StdClass;
+            if(!$param['qtde_horas_tarde']){
+                $obj->qtde_horas_final_tarde = '';
+                TButton::disableField('form_Ponto', 'salvar');
+                new TMessage('error', 'Selecione um ponto com entrada de 2° turno em aberto');
+            } else {
+                if($param['qtde_horas_tarde'] > $param['qtde_horas_final_tarde']){
+                    $obj->qtde_horas_final_tarde = '';
+                    TButton::disableField('form_Ponto', 'salvar');
+                    new TMessage('error', 'Horario de saida não pode ser menor que o horario de entrada');
+                }        
+            }     
+            TForm::sendData('form_Ponto', $obj, FALSE, FALSE); 
+        } else {
+            if(is_numeric($param['qtde_minutos_final_tarde'])){
+                TButton::disableField('form_Ponto', 'salvar');
+            }
+        }
+    }
+    
+    public static function onChangeMinutoSaidaSegundoTurno($param)
+    {
+        TButton::enableField('form_Ponto', 'salvar');
+        if(is_numeric($param['qtde_minutos_final_tarde'])){
+            $obj = new StdClass;
+            if(!$param['qtde_horas_final_tarde']){
+                $obj->qtde_minutos_final_tarde = '';
+                TButton::disableField('form_Ponto', 'salvar');
+                new TMessage('error', 'Selecione um horario para saida');
+            } else {
+                if($param['qtde_horas_tarde'] == $param['qtde_horas_final_tarde']){
+                    if($param['qtde_minutos_final_tarde'] < $param['qtde_minutos_tarde']){
+                        $obj->qtde_minutos_final_tarde = '';
+                        TButton::disableField('form_Ponto', 'salvar');
+                        new TMessage('error', 'Horario de saida não pode ser menor que o horario de entrada');
+                    }
+                }        
+            }     
+            TForm::sendData('form_Ponto', $obj, FALSE, FALSE);
+        } else {
+            if(is_numeric($param['qtde_horas_final_tarde'])){
+                TButton::disableField('form_Ponto', 'salvar');
+            }
+        }
+    }
+
+    public static function onChangeMinutoEntradaSegundoTurno($param)
+    {
+        TButton::enableField('form_Ponto', 'salvar');
+        if(is_numeric($param['qtde_minutos_tarde'])){
+            $string = new StringsUtil;
+            $obj = new StdClass;
+            if(!$param['qtde_horas_tarde']){
+                $obj->qtde_minutos_tarde = '';
+                TButton::disableField('form_Ponto', 'salvar');
+                new TMessage('error', 'Selecione um horario para entrada');
+            } else {
+                if($param['qtde_horas_final']){
+                    $saidaAlmoco = str_pad($param['qtde_horas_final'], 2, 0, STR_PAD_LEFT).':'.str_pad($param['qtde_minutos_final'], 2, 0, STR_PAD_LEFT).':00';
+                    $voltaAlmoco = str_pad($param['qtde_horas_tarde'], 2, 0, STR_PAD_LEFT).':'.str_pad($param['qtde_minutos_tarde'], 2, 0, STR_PAD_LEFT).':00';
+                    $saida = $string->time_to_sec($saidaAlmoco);                
+                    $volta = $string->time_to_sec($voltaAlmoco);
+                    $diferenca = $volta - $saida;
+                    if($diferenca < 3600){
+                        $obj->qtde_minutos_tarde = '';
+                        TButton::disableField('form_Ponto', 'salvar');
+                        new TMessage('error', 'A diferença entre turnos deve ser de pelo menos uma hora');
+                    }
+                }
+            }     
+            TForm::sendData('form_Ponto', $obj, FALSE, FALSE); 
+        } else {
+            if(is_numeric($param['qtde_horas_tarde'])){
+                TButton::disableField('form_Ponto', 'salvar');
+            }
+        }
+    }
+
+    public static function onChangeHoraEntradaSegundoTurno($param)
+    {
+        TButton::enableField('form_Ponto', 'salvar');
+        if(is_numeric($param['qtde_horas_tarde'])){
+            $obj = new StdClass;
+            if(!$param['data_ponto']){
+                $obj->qtde_horas_tarde = '';
+                TButton::disableField('form_Ponto', 'salvar');
+                new TMessage('error', 'Selecione uma data');
+            } else {
+                if($param['qtde_horas']){
+                    if(!$param['qtde_horas_final'] && !$param['qtde_minutos_final']){
+                        $obj->qtde_horas_tarde = '';
+                        TButton::disableField('form_Ponto', 'salvar');
+                        new TMessage('error', 'Encerre o turno da manha');
+                    } else {
+                        if($param['qtde_horas_tarde'] <= $param['qtde_horas_final']){
+                            $obj->qtde_horas_tarde = '';
+                            TButton::disableField('form_Ponto', 'salvar');
+                            new TMessage('error', 'A diferença entre turnos deve ser de pelo menos uma hora');
+                        }
+                    }
+                }
+            }     
+            TForm::sendData('form_Ponto', $obj, FALSE, FALSE); 
+        } else {
+            if(is_numeric($param['qtde_minutos_tarde'])){
+                TButton::disableField('form_Ponto', 'salvar');
+            }
+        }
+    }
+
+    public static function onChangeHoraSaidaPrimeiroTurno($param)
+    {
+        TButton::enableField('form_Ponto', 'salvar');
+        if(is_numeric($param['qtde_horas_final'])){
+            $obj = new StdClass;
+            if(!$param['qtde_horas']){
+                $obj->qtde_horas_final = '';
+                TButton::disableField('form_Ponto', 'salvar');
+                new TMessage('error', 'Selecione um ponto com entrada de 1° turno em aberto');
+            } else {
+                if($param['qtde_horas'] > $param['qtde_horas_final']){
+                    $obj->qtde_horas_final = '';
+                    TButton::disableField('form_Ponto', 'salvar');
+                    new TMessage('error', 'Horario de saida não pode ser menor que o horario de entrada');
+                }        
+            }     
+            TForm::sendData('form_Ponto', $obj, FALSE, FALSE); 
+        }  else {
+            if(is_numeric($param['qtde_minutos_final'])){
+                TButton::disableField('form_Ponto', 'salvar');
+            }
+        }
+    }
+    
+    public static function onChangeMinutoSaidaPrimeiroTurno($param)
+    {
+        TButton::enableField('form_Ponto', 'salvar');
+        if(is_numeric($param['qtde_minutos_final'])){
+            $obj = new StdClass;
+            if(!$param['qtde_horas_final']){
+                $obj->qtde_minutos_final = '';
+                TButton::disableField('form_Ponto', 'salvar');
+                new TMessage('error', 'Selecione um horario para saida');
+            } else {
+                if($param['qtde_horas'] == $param['qtde_horas_final']){
+                    if($param['qtde_minutos_final'] < $param['qtde_minutos']){
+                        $obj->qtde_minutos_final = '';
+                        TButton::disableField('form_Ponto', 'salvar');
+                        new TMessage('error', 'Horario de saida não pode ser menor que o horario de entrada');
+                    }
+                }        
+            }     
+            TForm::sendData('form_Ponto', $obj, FALSE, FALSE);
+        } else {
+            if(is_numeric($param['qtde_horas_final'])){
+                TButton::disableField('form_Ponto', 'salvar');
+            }
+        }
+    }
+        
+    public static function onChangeHoraEntradaPrimeiroTurno($param)
+    {
+        TButton::enableField('form_Ponto', 'salvar');
+        if(is_numeric($param['qtde_horas'])){
+            $obj = new StdClass;
+            if(!$param['data_ponto']){
+                $obj->qtde_horas = '';
+                TButton::disableField('form_Ponto', 'salvar');
+                new TMessage('error', 'Selecione uma data');
+            }     
+            TForm::sendData('form_Ponto', $obj, FALSE, FALSE);
+        } else {
+            if(is_numeric($param['qtde_minutos'])){
+                TButton::disableField('form_Ponto', 'salvar');
+            }
+        }
+    }
+    
+    public static function onChangeMinutoEntradaPrimeiroTurno($param)
+    {
+        TButton::enableField('form_Ponto', 'salvar');
+        if(is_numeric($param['qtde_minutos'])){
+            $obj = new StdClass;
+            if(!$param['qtde_horas']){
+                $obj->qtde_minutos = '';
+                TButton::disableField('form_Ponto', 'salvar');
+                new TMessage('error', 'Selecione um horario para entrada');
+            }     
+            TForm::sendData('form_Ponto', $obj, FALSE, FALSE);
+        } else {
+            if(is_numeric($param['qtde_horas'])){
+                TButton::disableField('form_Ponto', 'salvar');
+            }
+        }    
     }
     
     public static function onChangeDataAction($param)
@@ -192,7 +443,7 @@ class PontoFormList extends TPage
                         {
                             
                             //verificar se a data ta fechada
-                            if($ponto->hora_saida)
+                            if($ponto->hora_saida || $ponto->hora_saida_tarde)
                             {
                                 TButton::enableField('form_Ponto', 'salvar');
                             }
@@ -336,20 +587,37 @@ class PontoFormList extends TPage
             $object = $this->form->getData('Ponto');
           
             $object->data_ponto ? $object->data_ponto = $this->string->formatDate($object->data_ponto) : null;
-         
-            $object->hora_entrada = $object->qtde_horas.':'.$object->qtde_minutos.':00';
-            if($object->qtde_horas_final)
-            {
-                $object->hora_saida   = str_pad($object->qtde_horas_final, 2, 0, STR_PAD_LEFT).':'.str_pad($object->qtde_minutos_final, 2, 0, STR_PAD_LEFT).':00';
-            }
             
-            if(!$object->qtde_horas_final && !$object->qtde_minutos_final)
+            $hora_final = null;
+            
+            if($object->qtde_horas)
             {
+                $object->hora_entrada = $object->qtde_horas.':'.$object->qtde_minutos.':00';
+            } else {
+                $object->hora_entrada = '';
+            }          
+                     
+            if($object->qtde_horas_final){
+                $object->hora_saida   = str_pad($object->qtde_horas_final, 2, 0, STR_PAD_LEFT).':'.str_pad($object->qtde_minutos_final, 2, 0, STR_PAD_LEFT).':00';
+                $hora_final = $object->hora_saida;
+            } else {
                 $object->hora_saida = '';
             }
             
-            if(!$object->qtde_horas_final && $object->qtde_minutos_final)
-            {
+            if($object->qtde_horas_tarde) {
+                $object->hora_entrada_tarde = $object->qtde_horas_tarde.':'.$object->qtde_minutos_tarde.':00';
+            } else {
+                $object->hora_entrada_tarde = '';
+            }          
+                     
+            if($object->qtde_horas_final_tarde) {
+                $object->hora_saida_tarde   = str_pad($object->qtde_horas_final_tarde, 2, 0, STR_PAD_LEFT).':'.str_pad($object->qtde_minutos_final_tarde, 2, 0, STR_PAD_LEFT).':00';
+                $hora_final = $object->hora_saida_tarde;
+            } else {
+                $object->hora_saida_tarde = '';
+            }
+            
+            if(!$object->qtde_horas_final && $object->qtde_minutos_final) {
                 throw new Exception("Horário final inválido");   
             }
             
@@ -357,7 +625,7 @@ class PontoFormList extends TPage
             
             $parameters = array('user' => $object->colaborador_id, 'data' => $object->data_ponto);
             
-            $validador->validate('Hora Final', $object->hora_saida, $parameters);
+            $validador->validate('Hora Final', $hora_final, $parameters);
                         
             $this->form->validate(); // form validation
             $object->store(); // stores the object
@@ -410,6 +678,22 @@ class PontoFormList extends TPage
                         TButton::enableField('form_Ponto', 'salvar');
                         TCombo::disableField('form_Ponto', 'qtde_horas');
                         TCombo::disableField('form_Ponto', 'qtde_minutos');
+                        
+                        if($object->hora_entrada_tarde){
+                            $ultima = Atividade::retornaHoraUltimaAtividade($object->colaborador_id, $object->data_ponto);
+                            $horaAtividade       = new DateTime($ultima);
+                            $horaEntradaTarde    = new DateTime($object->hora_entrada_tarde);
+                            
+                            if($horaAtividade > $horaEntradaTarde){
+                                TCombo::disableField('form_Ponto', 'qtde_horas');
+                                TCombo::disableField('form_Ponto', 'qtde_minutos');
+                                TCombo::disableField('form_Ponto', 'qtde_horas_final');
+                                TCombo::disableField('form_Ponto', 'qtde_minutos_final');
+                                TCombo::disableField('form_Ponto', 'qtde_horas_tarde');
+                                TCombo::disableField('form_Ponto', 'qtde_minutos_tarde');
+                            }
+                        }
+                                                
                     }
                 }
                 else
@@ -418,15 +702,54 @@ class PontoFormList extends TPage
                     TCombo::disableField('form_Ponto', 'qtde_minutos');
                     TCombo::disableField('form_Ponto', 'qtde_horas_final');
                     TCombo::disableField('form_Ponto', 'qtde_minutos_final');
+                    
+                    TCombo::disableField('form_Ponto', 'qtde_horas_tarde');
+                    TCombo::disableField('form_Ponto', 'qtde_minutos_tarde');
+                    TCombo::disableField('form_Ponto', 'qtde_horas_final_tarde');
+                    TCombo::disableField('form_Ponto', 'qtde_minutos_final_tarde');
+                    
                 }
+                
                 $object->data_ponto ? $object->data_ponto = $this->string->formatDateBR($object->data_ponto) : null;
                 
-                $horario       = explode(':', $object->hora_entrada);
-                $horario_final = explode(':', $object->hora_saida);
-                $object->qtde_horas         = $horario[0];
-                $object->qtde_minutos       = $horario[1];
-                $object->qtde_horas_final   = $horario_final[0];
-                $object->qtde_minutos_final = $horario_final[1];
+                $horario                            = explode(':', $object->hora_entrada);
+                $horario_final                      = explode(':', $object->hora_saida);
+                $horario_tarde                      = explode(':', $object->hora_entrada_tarde);
+                $horario_final_tarde                = explode(':', $object->hora_saida_tarde);
+                $object->qtde_horas                 = $horario[0];
+                $object->qtde_minutos               = $horario[1];
+                $object->qtde_horas_final           = $horario_final[0];
+                $object->qtde_minutos_final         = $horario_final[1];
+                $object->qtde_horas_tarde           = $horario_tarde[0];
+                $object->qtde_minutos_tarde         = $horario_tarde[1];
+                $object->qtde_horas_final_tarde     = $horario_final_tarde[0];
+                $object->qtde_minutos_final_tarde   = $horario_final_tarde[1];
+                
+                if($object->qtde_horas_tarde and $object->qtde_minutos_tarde) {
+                    TCombo::disableField('form_Ponto', 'qtde_horas');
+                    TCombo::disableField('form_Ponto', 'qtde_minutos');
+                    TCombo::disableField('form_Ponto', 'qtde_horas_final');
+                    TCombo::disableField('form_Ponto', 'qtde_minutos_final');
+                }
+                
+                if($object->hora_saida_tarde){
+                    TCombo::disableField('form_Ponto', 'qtde_horas');
+                    TCombo::disableField('form_Ponto', 'qtde_minutos');
+                    TCombo::disableField('form_Ponto', 'qtde_horas_final');
+                    TCombo::disableField('form_Ponto', 'qtde_minutos_final');
+                    TCombo::disableField('form_Ponto', 'qtde_horas_tarde');
+                    TCombo::disableField('form_Ponto', 'qtde_minutos_tarde');
+                }
+                
+                if($object->hora_saida){
+                    TCombo::disableField('form_Ponto', 'qtde_horas');
+                    TCombo::disableField('form_Ponto', 'qtde_minutos');
+                }
+                
+                if(!$object->hora_entrada_tarde){
+                    TCombo::disableField('form_Ponto', 'qtde_horas_final_tarde');
+                    TCombo::disableField('form_Ponto', 'qtde_minutos_final_tarde');
+                }
                 
                 $this->form->setData($object); // fill the form with the active record data
 
@@ -474,50 +797,59 @@ class PontoFormList extends TPage
     
     public function calculaDiferenca($campo, $object, $row)
     {
-        if($object->hora_saida)
-        {    
-            $HoraEntrada = new DateTime($object->hora_entrada);
-            $HoraSaida   = new DateTime($object->hora_saida);
-            $almoco      = new DateTime('01:00:00');
-            $limite = new DateTime('06:00:00');
+        if($object->hora_saida and $object->hora_saida_tarde){
+            $HoraEntrada         = new DateTime($object->hora_entrada);
+            $HoraSaida           = new DateTime($object->hora_saida);
+                    
+            $campo = $HoraSaida->diff($HoraEntrada)->format('%H:%I:%S');
+            $totalPrimeiroTurno  = $this->string->time_to_sec($campo);
+            
+            $HoraEntradaTarde    = new DateTime($object->hora_entrada_tarde);
+            $HoraSaidaTarde      = new DateTime($object->hora_saida_tarde);
+                    
+            $campo = $HoraSaidaTarde->diff($HoraEntradaTarde)->format('%H:%I:%S');
+            $totalSegundoTurno  = $this->string->time_to_sec($campo);
+            
+            $total = $totalSegundoTurno + $totalPrimeiroTurno;
+            $campo = $this->string->sec_to_time($total); 
+            
+            return substr($campo,0,-3);         
+        }
+        
+        if($object->hora_saida and !$object->hora_saida_tarde) {   
+            $HoraEntrada         = new DateTime($object->hora_entrada);
+            $HoraSaida           = new DateTime($object->hora_saida);
+                    
             $campo = $HoraSaida->diff($HoraEntrada)->format('%H:%I');
-            $total       = new DateTime($campo);
-            if($total > $limite)
-            {
-               $campo = $total->diff($almoco)->format('%H:%I');
-            }                                
+                                    
             return $campo;
         }
+        
+        if(!$object->hora_saida and $object->hora_saida_tarde) {   
+            $HoraEntrada         = new DateTime($object->hora_entrada_tarde);
+            $HoraSaida           = new DateTime($object->hora_saida_tarde);
+                    
+            $campo = $HoraSaida->diff($HoraEntrada)->format('%H:%I');
+                                    
+            return $campo;
+        }
+        
     }
     
     public function calculaPercentualProdutividade($campo, $object, $row)
-    {
-        $intervalo = Ponto::horaPreenchidas($object->data_ponto, $object->colaborador_id);
-        $HoraEntrada = new DateTime($object->hora_entrada);
-        $HoraSaida   = new DateTime($object->hora_saida);
-        $almoco      = new DateTime('01:00:00');
-        $limite = new DateTime('06:00:00');
-        $ponto = $HoraSaida->diff($HoraEntrada)->format('%H:%I:%S');
-        $total       = new DateTime($ponto);
-        if($total > $limite)
-        {
-        $ponto = $total->diff($almoco)->format('%H:%I:%S');  
-        }
-                            
-        if($object->hora_saida)
-        {  
-            $campo = round($this->string->time_to_sec($intervalo) * 100 / $this->string->time_to_sec($ponto) );
-            
-            if($campo > 49){
+    {       
+        $intervalo = $this->retornaIntervalo($campo, $object, $row);
+        $ponto = new CalculoHorario;
+        $horaPonto = $ponto->retornoCargaHorariaDiaria($object);
+        
+        if($horaPonto){        
+            $campo = round($this->string->time_to_sec($intervalo) * 100 / $this->string->time_to_sec($horaPonto) );
+            if($campo > 59){
                 return "<span style='color:#007BFF'><b>".$campo."%</b></span>";
-            } elseif($campo > 29) {
-                return "<span style='color:#FFB300'><b>".$campo."%</b></span>";
             } else {
-                return "<span style='color:#FF0000'><b>".$campo."%</b></span>";
-            }
-            
-        }
-             
+                return "<span style='color:#FFB300'><b>".$campo."%</b></span>";
+            } 
+        }   
     }
     
 }

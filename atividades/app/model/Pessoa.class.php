@@ -49,7 +49,7 @@ class Pessoa extends TRecord
         $criteria = new TCriteria;
         
         if($entcodent == '999'){
-        $criteria->add(new TFilter('origem', '=', 2) );
+        $criteria->add(new TFilter('origem', 'IN', array(2, 3)  ) );
         } else {
         $criteria->add(new TFilter('origem', '=', 1) );
         $criteria->add(new TFilter('codigo_cadastro_origem', '=', $entcodent) );

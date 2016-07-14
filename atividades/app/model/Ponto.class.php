@@ -20,27 +20,8 @@ class Ponto extends TRecord
         parent::addAttribute('hora_entrada');
         parent::addAttribute('hora_saida');
         parent::addAttribute('colaborador_id');
-    }
-    
-    public function retornaTempoPonto($user, $data)
-    {
-
-        $conn = TTransaction::get();
-        $result = $conn->query("select (hora_saida - hora_entrada) as horario from ponto where data_ponto = '{$data}' and colaborador_id = ".$user);
-        
-        $data = '00:00:00';
-        foreach ($result as $row)
-        {
-            $data = $row['horario'];
-        }
-        
-        if(!$data)
-        {
-            $data = '00:00:00';
-        }
-
-        return $data;
-        
+        parent::addAttribute('hora_entrada_tarde');
+        parent::addAttribute('hora_saida_tarde');
     }
     
     public function retornaUltimoPonto($user)
@@ -63,37 +44,20 @@ class Ponto extends TRecord
         
     }
         
-    public function retornaHoraInicio($data, $user)
+    public function retornaHoraInicio($data, $user, $horario)
     {
-        
         if($data)
         {
-            
             $conn = TTransaction::get();
             
-            // busca ultima hora da atividade do dia
-            $result = $conn->query("SELECT MAX(hora_fim) as hora_fim FROM atividade WHERE data_atividade = '{$data}' AND colaborador_id = {$user} LIMIT 1");
+            // busca ultima hora da atividade do dia com base no turno
+            $hora = null;
+            $result = $conn->query("SELECT MAX(hora_fim) as hora_fim FROM atividade WHERE data_atividade = '{$data}' AND colaborador_id = {$user} and hora_fim > '{$horario}' LIMIT 1");
             foreach ($result as $row)
             {
                 $hora = $row['hora_fim'];
             }
-            
-            // busca hora entrada ponto do dia
-            if (!$hora) 
-            {
-                $result = $conn->query("SELECT MAX(hora_entrada) as hora_entrada FROM ponto WHERE data_ponto = '{$data}' AND colaborador_id = {$user} LIMIT 1");
-                foreach ($result as $row)
-                {
-                    $hora = $row['hora_entrada'];
-                }
-            }
-            
-            if(!$hora)
-            {
-                $action = new TAction(array('PontoFormList', 'onReload'));
-                new TMessage('info', 'Nesta data não existe ponto cadastrado', $action); // success message
-            }
-            
+                        
             return $hora;
             
         }
@@ -110,26 +74,20 @@ class Ponto extends TRecord
         $mes = date('m');
         $ano = date('Y');
         $conn = TTransaction::get();
-        $result = $conn->query("select (hora_saida - hora_entrada) as horario from ponto 
-                                where colaborador_id = {$user} and extract('month' from data_ponto) = {$mes} and extract('year' from data_ponto) = {$ano} and hora_saida is not null and hora_entrada is not null");
+        $result = $conn->query("select (hora_saida - hora_entrada) as horario_manha, (hora_saida_tarde - hora_entrada_tarde) as horario_tarde, 
+                                (coalesce((hora_saida_tarde - hora_entrada_tarde),'00:00:00') + coalesce((hora_saida - hora_entrada), '00:00:00') ) as horario_total 
+                                from ponto 
+                                where colaborador_id = {$user} and 
+                                      extract('month' from data_ponto) = {$mes} and 
+                                      extract('year' from data_ponto) = {$ano} and 
+                                      (hora_saida is not null or hora_saida_tarde is not null)");
         
-        $almoco       = new DateTime('01:00:00');
-        $limite       = new DateTime('06:00:00');
         $cargaHoraria = $string->time_to_sec('08:48:00');
         $saldo = null;
         
-        foreach ($result as $row)
-        {
-            $total = new DateTime($row['horario']);
-            if($total > $limite){
-               $total = $total->diff($almoco)->format('%H:%I:%S');
-            } else {
-                $total = $row['horario'];
-            }
-                     
-            $saldo += $string->time_to_sec($total) - $cargaHoraria;
+        foreach ($result as $row) {
+            $saldo += $string->time_to_sec($row['horario_total']) - $cargaHoraria;
         }
-        
         
         return $string->sec_to_time($saldo);
     }

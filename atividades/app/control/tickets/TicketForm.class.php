@@ -91,6 +91,7 @@ class TicketForm extends TPage
         $criteria->add(new TFilter("origem", "=", 1));
         $criteria->add(new TFilter("ativo", "=", 1));
         $criteria->add(new TFilter("codigo_cadastro_origem", "=", 100));
+        $proprietario_id                = new TDBCombo('proprietario_id', 'atividade', 'Pessoa', 'pessoa_codigo', 'pessoa_nome', 'pessoa_nome', $criteria);
         $responsavel_id                 = new TDBCombo('responsavel_id', 'atividade', 'Pessoa', 'pessoa_codigo', 'pessoa_nome', 'pessoa_nome', $criteria);
         $tipo_ticket_id                 = new TDBCombo('tipo_ticket_id', 'atividade', 'TipoTicket', 'id', 'nome');
         $tipo_ticket_id->setDefaultOption(FALSE);
@@ -146,6 +147,7 @@ class TicketForm extends TPage
         $observacao->setSize(400, 80);
         $nome_dtr->setSize(400);
         $titulo->setSize(390);
+        $proprietario_id->setSize(390);
         $responsavel_id->setSize(390);
         $tipo_ticket_id->setSize(200);
         $sistema_id->setSize(200);
@@ -158,6 +160,7 @@ class TicketForm extends TPage
         // validações
         $titulo->addValidation('Titulo', new TRequiredValidator);
         $combo_solicitante_id->addValidation('Solicitante', new TRequiredValidator);
+        $proprietario_id->addValidation('Proprietário', new TRequiredValidator);
         $responsavel_id->addValidation('Responsável', new TRequiredValidator);
         $sistema_id->addValidation('Sistema', new TRequiredValidator);   
         
@@ -181,6 +184,9 @@ class TicketForm extends TPage
         $label_combo_origem->setFontColor('#FF0000'); 
         $table->addRowSet(  $label_solicitante = new TLabel('Solicitante:'), $combo_solicitante_id  );
         $label_solicitante->setFontColor('#FF0000'); 
+        
+        $table->addRowSet( $label_proprietario = new TLabel('Proprietário:'), $proprietario_id );
+        $label_proprietario->setFontColor('#FF0000');   
         
         $table->addRowSet( $label_responsavel = new TLabel('Responsável:'), $responsavel_id );
         $label_responsavel->setFontColor('#FF0000');       
@@ -240,7 +246,7 @@ class TicketForm extends TPage
         $this->form->setFields(array($id,$titulo,$data_inicio,$data_inicio_oculta,$data_encerramento,$data_cancelamento,$origem,$solicitacao_descricao,$nome_dtr,
                                          $providencia,$orcamento_horas,$orcamento_valor_hora,$valor_desconto,$valor_total,$forma_pagamento,$data_ultimo_pgto,
                                          $valor_ultimo_pgto,$valor_total_pago,$data_cadastro,$data_prevista,$data_aprovacao,$observacao, $tipo_ticket_id,$sistema_id,
-                                         $status_ticket_id,$prioridade_id,$responsavel_id, $valor_total_parcial, $valor_pagamento, $data_pagamento, $valor_saldo,
+                                         $status_ticket_id,$prioridade_id,$responsavel_id,$proprietario_id,$valor_total_parcial, $valor_pagamento, $data_pagamento, $valor_saldo,
                                          $combo_tipo_origens,$combo_codigo_origem,$combo_solicitante_id, $logado_id));
 
         // create the form actions
@@ -250,6 +256,8 @@ class TicketForm extends TPage
         $list_button   = TButton::create('list', array('TicketList', 'onReload'), _t('List'), 'fa:table blue');
         $enviar_email  = TButton::create('email', array($this, 'onEnviaEmail'), 'Enviar Email', 'ico_email.png');
         $sincronizar   = TButton::create('sincronizar', array($this, 'onSincronizarContatos'), 'Sincronizar Contatos', 'sincronizar.png');
+        
+        TButton::disableField('form_Ticket', 'email');
         
         $this->form->addField($save_button);
         $this->form->addField($new_button);
@@ -668,7 +676,6 @@ class TicketForm extends TPage
     {   
         $string = new StringsUtil;
         $obj = new StdClass;
-           
         if(strlen($param['data_encerramento']) == 10)
         {
             if($param['responsavel_id'] == $param['logado_id'])
@@ -696,6 +703,10 @@ class TicketForm extends TPage
             	     $obj->status_ticket_id = 1; 
             	     $obj->data_encerramento = '';
             	     new TMessage('error', 'Data de inicio maior que data de encerramento');
+                }
+                elseif($string->desconverteReais($param['valor_saldo']) > 0)
+                {
+                     $obj->status_ticket_id = 6; 
                 }
                 else
                 {
@@ -950,9 +961,21 @@ class TicketForm extends TPage
             
             // get the form data into an active record Ticket
             $object = $this->form->getData('Ticket');
+            
+            $vars['tipo_origens']                 = $object->tipo_origens;
+            $vars['codigo_cadastro_origem']       = $object->codigo_cadastro_origem;
+            $vars['solicitante_id']               = $object->solicitante_id;
+                    
+            $this->onChangeOrigem($vars);
+            $this->onChangeTipoOrigem($vars);
+            
+            $this->onSetarValoresCombo($vars);
                   
             $validador = new TUltiPgtoValidator;
             $validador->validate('Ultimo pagamento', '', array($object->valor_pagamento, $object->data_pagamento ));
+            
+            $validador = new THorasValorValidator;
+            $validador->validate('Orcamento', '', array($object->status_ticket_id, $object->orcamento_horas, $object->orcamento_valor_hora));
             
             !$object->data_cadastro ? $object->data_cadastro = date('Y-m-d') : $object->data_cadastro = $string->formatDate($object->data_cadastro);
                         
@@ -974,6 +997,10 @@ class TicketForm extends TPage
                                                 
             $object->orcamento_horas ? $object->orcamento_horas = $object->orcamento_horas.':00:00' : null;
             
+            if($object->orcamento_horas == 0){            
+                $object->orcamento_horas = '00:00:00';
+            }
+            
             $object->orcamento_valor_hora ? $object->orcamento_valor_hora = $string->desconverteReais($object->orcamento_valor_hora) : null;
             $object->valor_desconto ? $object->valor_desconto = $string->desconverteReais($object->valor_desconto) : null;
             $object->valor_total ? $object->valor_total = $string->desconverteReais($object->valor_total) : null;
@@ -987,16 +1014,12 @@ class TicketForm extends TPage
                 $object->valor_total_pago += $string->desconverteReais($object->valor_pagamento);
             }
             
-            $vars['tipo_origens']                 = $object->tipo_origens;
-            $vars['codigo_cadastro_origem']       = $object->codigo_cadastro_origem;
-            $vars['solicitante_id']               = $object->solicitante_id;
-                    
-            $this->onChangeOrigem($vars);
-            $this->onChangeTipoOrigem($vars);
-            
-            $this->onSetarValoresCombo($vars);
-            
             $this->form->validate(); // form validation
+
+            if(($object->status_ticket_id == 6) && (($object->valor_total*1) == ($object->valor_total_pago*1)))
+            {
+                $object->status_ticket_id = 3;
+            }
             
             $object->store(); // stores the object
             
@@ -1022,7 +1045,16 @@ class TicketForm extends TPage
             $object->valor_ultimo_pgto ? $object->valor_ultimo_pgto = number_format($object->valor_ultimo_pgto, 2, ',', '.') : null;
             $object->valor_total_pago ? $object->valor_total_pago = number_format($object->valor_total_pago, 2, ',', '.') : null;
             
+            $object->data_pagamento = '';
+            $object->valor_pagamento = '';
+            
+            if($object->id > 0)
+            {
+                TButton::enableField('form_Ticket', 'email');           
+            }
+            
             $ticket = new Ticket($object->id);
+            
             $dtrs = $ticket->getRequisitoDesenvolvimentos();
             foreach ($dtrs as $dtr)
             {
@@ -1090,6 +1122,11 @@ class TicketForm extends TPage
                 foreach ($dtrs as $dtr)
                 {
                     $object->nome_dtr = $dtr->titulo;
+                }
+                
+                if($key > 0)
+                {
+                    TButton::enableField('form_Ticket', 'email');
                 }
                                 
                 if($object->nome_dtr)

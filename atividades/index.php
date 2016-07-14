@@ -34,6 +34,11 @@ if (TSession::getValue('logged'))
         $method = isset($_REQUEST['method']) ? $_REQUEST['method'] : NULL;
         AdiantiCoreApplication::loadPage($_REQUEST['class'], $method, $_REQUEST);
     }
+    else
+    {
+        $method = isset($_REQUEST['method']) ? $_REQUEST['method'] : NULL;
+        AdiantiCoreApplication::loadPage('PontoFormList', $method, $_REQUEST);
+    }
 }
 else
 {

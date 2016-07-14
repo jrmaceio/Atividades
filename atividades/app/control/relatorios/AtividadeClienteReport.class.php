@@ -72,30 +72,34 @@ class AtividadeClienteReport extends TPage
         {
             $arrayClientes[$cliente->entcodent] = str_pad($cliente->entcodent, 4, '0', STR_PAD_LEFT).' - '.$cliente->entrazsoc;
         }
-        $arrayClientes[999] = 'ECS 999';
+        $arrayClientes[999] = '0999 - OUTROS';
            
         TTransaction::close();
         
         $colaborador_id                 = new TCombo('colaborador_id');
         $colaborador_id->setDefaultOption(FALSE);
         $colaborador_id->addItems($arrayPessoas);
+
+
         
         $cliente_id                     = new TCombo('cliente_id');
         $cliente_id->setDefaultOption(FALSE);
         $cliente_id->addItems($arrayClientes);
         
         $anos = array(
-                            2015 => '2015'
+                            2015 => '2015',
+                            2016 => '2016'
                       );         
-        
+       
         $mes_atividade_inicial    = new TCombo('mes_atividade_inicial');
         $mes_atividade_inicial->addItems($this->string->array_meses());
         $mes_atividade_inicial->setDefaultOption(FALSE);
         $mes_atividade_inicial->setValue(date('m'));        
         $ano_atividade_inicial    = new TCombo('ano_atividade_inicial');
         $ano_atividade_inicial->addItems($anos);
-        $ano_atividade_inicial->setDefaultOption(FALSE);       
-
+        $ano_atividade_inicial->setDefaultOption(FALSE);
+        $ano_atividade_inicial->setValue(date('Y'));
+ 
         $mes_atividade_final      = new TCombo('mes_atividade_final');
         $mes_atividade_final->addItems($this->string->array_meses());
         $mes_atividade_final->setDefaultOption(FALSE);
@@ -103,6 +107,7 @@ class AtividadeClienteReport extends TPage
         $ano_atividade_final      = new TCombo('ano_atividade_final');           
         $ano_atividade_final->addItems($anos);
         $ano_atividade_final->setDefaultOption(FALSE);
+        $ano_atividade_final->setValue(date('Y'));
         
         $output_type              = new TRadioGroup('output_type');       
 
@@ -172,28 +177,32 @@ class AtividadeClienteReport extends TPage
     
     function retornaPonto($user, $mes, $ano)
     {
+        
         $ultimo_dia = date("t", mktime(0,0,0,$mes,'01',$ano));
         $totalPonto = null;
         
-        for ($dia = 1; $dia <= $ultimo_dia; $dia++)
+        $inicio = $ano.'-'.$mes.'-01';
+        $final  = $ano.'-'.$mes.'-'.$ultimo_dia;
+        
+        $criteria = new TCriteria;
+        
+        $criteria->add(new TFilter("data_ponto", "between", $inicio),  TExpression::AND_OPERATOR);        
+        $criteria->add(new TFilter("", "", $final),  TExpression::AND_OPERATOR);
+        $criteria->add(new TFilter("colaborador_id", "=", $user),          TExpression::AND_OPERATOR);
+        
+        $repo = new TRepository('Ponto');
+        $pontos = $repo->load($criteria);
+
+        $horario = new CalculoHorario;
+           
+        foreach($pontos as $ponto)
         {
-        
-            $data = $ano.'-'.$mes.'-'.$dia;
-            $ponto = Ponto::retornaTempoPonto($user, $data);
-                        
-            $total = new DateTime($ponto);
-            $almoco = new DateTime('01:00:00');
-            $limite = new DateTime('06:00:00');
-            if($total > $limite)
-            {
-                $ponto = $total->diff($almoco)->format('%H:%I:%S');
-            }
-            
-            $totalPonto += $this->string->time_to_sec($ponto);
-        
+            $horaPonto = $horario->retornoCargaHorariaDiaria($ponto);                                 
+            $totalPonto += $this->string->time_to_sec($horaPonto.':00');
         }
         
         return $this->string->sec_to_time($totalPonto);
+        
     }
 
     /**
@@ -224,7 +233,7 @@ class AtividadeClienteReport extends TPage
                 $arrayTickets = $retorno;                
                 $tickets = implode(",",$retorno);
             }
-            
+           
             $criteria = new TCriteria;
             $criteria->add(new TFilter("origem", "=", 1));
             $criteria->add(new TFilter("codigo_cadastro_origem", "=", 100));
@@ -240,7 +249,7 @@ class AtividadeClienteReport extends TPage
     	    $count = $repository->count($criteria);
             
             $format  = $formdata->output_type;
-            
+           
             if ($count > 0)
             {
                 $widths = array();
@@ -277,7 +286,7 @@ class AtividadeClienteReport extends TPage
                 
                 // add a header row
                 $tr->addRow();
-                $tr->addCell('RELATORIO XPTO', 'center', 'header', $colunas);
+                $tr->addCell('Indicadores por Periodo', 'center', 'header', $colunas);
                 
                 // add a header row
                 $tr->addRow();
@@ -338,10 +347,14 @@ class AtividadeClienteReport extends TPage
                 $arrayPontoTotal = array();
                 $tr->addRow();
                 $tr->addCell(utf8_decode('Horas ponto total:'), 'left', 'datap');
+                 
+                
                 foreach($meses as $mes)
                 {
                     if($formdata->colaborador_id > 0){
                     $totalPonto = $this->retornaPonto($formdata->colaborador_id, substr($mes, 3, 2), substr($mes, 6, 4));
+                   
+                    
                     $totalPontoTotal += $this->string->time_to_sec($totalPonto);
                     $arrayPontoTotal[$i] = $this->string->time_to_sec($totalPonto);
                     } else {
@@ -732,8 +745,7 @@ class AtividadeClienteReport extends TPage
                 $tipoClientes = array();
                 $objects = Atividade::retornaClientesPeriodo($formdata->colaborador_id, $formdata->ano_atividade_inicial.'-'.str_pad($formdata->mes_atividade_inicial, 2, '0', STR_PAD_LEFT).'-01', $formdata->ano_atividade_final.'-'.str_pad($formdata->mes_atividade_final, 2, '0', STR_PAD_LEFT).'-'.cal_days_in_month(CAL_GREGORIAN, str_pad($formdata->mes_atividade_final, 2, '0', STR_PAD_LEFT), $formdata->ano_atividade_final), $tickets );
                 
-                foreach ($objects as $row)
-                {
+                foreach ($objects as $row) {
                     $cliente = new Pessoa($row['solicitante_id']);  
                     if($cliente->origem == 1)
                     {
@@ -747,6 +759,7 @@ class AtividadeClienteReport extends TPage
                 }
                 
                 arsort($tipoClientes);
+                
                 $colour= FALSE;
                 foreach($tipoClientes as $key => $value)
                 {
@@ -756,7 +769,8 @@ class AtividadeClienteReport extends TPage
                     $arrayClientes = array();
                     $labelCliente = '';
                     if($key == '999'){
-                    $labelCliente = '999 - ECS';
+                    $labelCliente = '999 - OUTROS';
+                    //echo $this->string->sec_to_time($value).'<<<';
                     } else {
                     $entidade = new Entidade($key);  
                     $labelCliente = str_pad($key, 3, '0', STR_PAD_LEFT) . ' - ' . $entidade->entnomfan;
@@ -821,10 +835,12 @@ class AtividadeClienteReport extends TPage
                 $tr->addCell($this->string->retira_segundos($totalAtividadeTotal), 'center', 'footer');
                 $tr->addCell('100%', 'center', 'footer'); 
                 
+                $var = rand(0, 1000);
+                
                 // stores the file
-                if (!file_exists("app/output/Atividade.{$format}") OR is_writable("app/output/Atividade.{$format}"))
+                if (!file_exists("app/output/Atividade{$var}.{$format}") OR is_writable("app/output/Atividade{$var}.{$format}"))
                 {
-                    $tr->save("app/output/Atividade.{$format}");
+                    $tr->save("app/output/Atividade{$var}.{$format}");
                 }
                 else
                 {
@@ -832,7 +848,7 @@ class AtividadeClienteReport extends TPage
                 }
                 
                 // open the report file
-                parent::openFile("app/output/Atividade.{$format}");
+                parent::openFile("app/output/Atividade{$var}.{$format}");
                 
                 // shows the success message
                 new TMessage('info', 'Report generated. Please, enable popups in the browser (just in the web).');

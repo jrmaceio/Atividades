@@ -28,13 +28,18 @@ class TicketPessoaSeek extends TWindow
 
         // create the form fields
         $name= new TEntry('pessoa_nome');
+        $origem= new TEntry('pessoa_origem');
         // keep the session value
         $name->setValue(TSession::getValue('test_pessoa_name'));
+        $origem->setValue(TSession::getValue('test_pessoa_origem'));
         
         // add the field inside the table
         $row=$table->addRow();
         $row->addCell(new TLabel('Nome:'));
         $row->addCell($name);
+        $row=$table->addRow();
+        $row->addCell(new TLabel('Origem:'));
+        $row->addCell($origem);
         
         // create a find button
         $find_button = new TButton('search');
@@ -47,7 +52,7 @@ class TicketPessoaSeek extends TWindow
         $row->addCell($find_button);
         
         // define wich are the form fields
-        $this->form->setFields(array($name, $find_button));
+        $this->form->setFields(array($name, $origem, $find_button));
         
         // create the datagrid
         $this->datagrid = new TDataGrid;
@@ -132,6 +137,15 @@ class TicketPessoaSeek extends TWindow
             $this->form->setData($data);
         }
         
+        
+        
+        if (isset($data->pessoa_origem))
+        {
+            TSession::setValue('test_pessoa_origem', $data->pessoa_origem);
+            // put the data back to the form
+            $this->form->setData($data);
+        }
+        
         // redefine the parameters for reload method
         $param=array();
         $param['offset']    =0;
@@ -148,6 +162,7 @@ class TicketPessoaSeek extends TWindow
         {
             // start database transaction
             TTransaction::open('atividade');
+            $clientes = Ticket::retornaClientesTickets();
             
             // create a repository for City table
             $repository = new TRepository('Pessoa');
@@ -165,12 +180,79 @@ class TicketPessoaSeek extends TWindow
             $criteria->setProperties($param); // order, offset
             $criteria->setProperty('limit', $limit);
             $criteria->add(new TFilter("ativo", "=", 1));
-            
+                        
             if (TSession::getValue('test_pessoa_filter'))
             {
                 // filter by city name
                 $criteria->add(TSession::getValue('test_pessoa_filter'));
             }
+            
+            if(TSession::getValue('test_pessoa_origem'))
+            {
+                $origem_nome = TSession::getValue('test_pessoa_origem');
+                $pessoas = array();
+                $repo = new TRepository('Entidade');
+                $cri = new TCriteria;
+                $cri->add(new TFilter("entnomfan", "ilike", "%{$origem_nome}%"));
+                $origens = $repo->load($cri);
+                 if($origens){
+                     $entidades = array();
+                     foreach($origens as $origem){
+                         $entidades[] = $origem->entcodent;   
+                     }                     
+                     $repo = new TRepository('Pessoa');
+                     $cri = new TCriteria;
+                     $cri->add(new TFilter("origem", "=", 1));
+                     $cri->add(new TFilter("codigo_cadastro_origem", "IN", $entidades));
+                     $load = $repo->load($cri);
+                     foreach ($load as $p){
+                         $pessoas[] = $p->pessoa_codigo;
+                     }
+                 }
+            
+                $repo = new TRepository('Estabelecimento');
+                $cri = new TCriteria;
+                $cri->add(new TFilter("lojnomfan", "ilike", "%{$origem_nome}%"));
+                $origens = $repo->load($cri);
+                 if($origens){
+                     $estabelecimentos = array();
+                     foreach($origens as $origem){
+                         $estabelecimentos[] = $origem->lojcodloj;   
+                     }
+                     $repo = new TRepository('Pessoa');
+                     $cri = new TCriteria;
+                     $cri->add(new TFilter("origem", "=", 2));
+                     $cri->add(new TFilter("codigo_cadastro_origem", "IN", $estabelecimentos));
+                     $load = $repo->load($cri);
+                     foreach ($load as $p){
+                         $pessoas[] = $p->pessoa_codigo;
+                     }
+                 }
+            
+                $repo = new TRepository('Empresa');
+                $cri = new TCriteria;
+                $cri->add(new TFilter("razao_social", "ilike", "%{$origem_nome}%"));
+                $origens = $repo->load($cri);
+                 if($origens){
+                     $empresas = array();
+                     foreach($origens as $origem){
+                         $empresas[] = $origem->id;   
+                     }
+                     $repo = new TRepository('Pessoa');
+                     $cri = new TCriteria;
+                     $cri->add(new TFilter("origem", "=", 3));
+                     $cri->add(new TFilter("codigo_cadastro_origem", "IN", $empresas));
+                     $load = $repo->load($cri);
+                     foreach ($load as $p){
+                         $pessoas[] = $p->pessoa_codigo;
+                     }
+                 }
+            
+                 $clientes = array_intersect($pessoas, $clientes);
+            
+            }
+            
+            $criteria->add(new TFilter("pessoa_codigo", "IN", $clientes));
             
             // load the objects according to the criteria
             $pessoas = $repository->load($criteria);
@@ -222,7 +304,6 @@ class TicketPessoaSeek extends TWindow
             $object = new StdClass;
             $object->solicitante_id   = $pessoa->pessoa_codigo;
             $object->solicitante_nome = $pessoa->pessoa_nome;
-            $object->origem_nome      = $pessoa->origem_nome;
 
             // closes the transaction
             TTransaction::close();

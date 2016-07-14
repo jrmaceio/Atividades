@@ -19,7 +19,7 @@ class TicketList extends TPage
         parent::__construct();
                         
         // creates the form
-        $this->form = new TForm('form_search_Ticket');
+        $this->form = new TForm('form_Ticket');
         $this->form->class = 'tform'; // CSS class
         
         // creates a table
@@ -42,8 +42,11 @@ class TicketList extends TPage
         $newparam['order'] = 'pessoa_nome';
         $newparam['direction'] = 'asc';
         $criteria->setProperties($newparam); // order, offset
-        $solicitante_id                 = new TDBSeekButton('solicitante_id', 'atividade','form_search_Ticket','Pessoa','pessoa_nome','solicitante_id', 'solicitante_nome', $criteria);
+        $solicitante_id                 = new TSeekButton('solicitante_id');
         $solicitante_nome               = new TEntry('solicitante_nome');
+		$obj                            = new TicketPessoaSeek('form_Ticket');
+        $action                         = new TAction(array($obj, 'onReload'));
+        $solicitante_id->setAction($action);      
         $solicitante_nome->setEditable(FALSE);
         
         $criteria = new TCriteria;
@@ -57,10 +60,14 @@ class TicketList extends TPage
         $criteria->add(new TFilter("ativo", "=", 1));
         $criteria->add(new TFilter("codigo_cadastro_origem", "=", 100));
         $responsavel_id                 = new TDBCombo('responsavel_id', 'atividade', 'Pessoa', 'pessoa_codigo', 'pessoa_nome', 'pessoa_nome', $criteria);
+        $proprietario_id                = new TDBCombo('proprietario_id', 'atividade', 'Pessoa', 'pessoa_codigo', 'pessoa_nome', 'pessoa_nome', $criteria);
         
         $prioridade_id                  = new TDBCombo('prioridade_id', 'atividade', 'Prioridade', 'id', 'nome');
         
         $sistema_id                     = new TDBCombo('sistema_id', 'atividade', 'Sistema', 'id', 'nome', 'nome');
+        
+        $total_registros               = new TEntry('total_registros');
+        $total_registros->setEditable(FALSE);
 
         // define the sizes
         $id->setSize(50);
@@ -72,21 +79,25 @@ class TicketList extends TPage
         $tipo_ticket_id->setSize(200);
         $sistema_id->setSize(200);
         $responsavel_id->setSize(274);
+        $proprietario_id->setSize(274);
         $prioridade_id->setSize(100);
+        $total_registros->setSize(100);
 
         // add one row for each form field
         $table->addRowSet( new TLabel('ID:'), $id );
         $table->addRowSet( new TLabel('Titulo:'), $titulo );
         $table->addRowSet( new TLabel('Cliente:'), array($solicitante_id, $solicitante_nome) );
         $table->addRowSet( new TLabel('Entidade:'), $entcodent );
+        $table->addRowSet( new TLabel('Proprietário:'), $proprietario_id );
         $table->addRowSet( new TLabel('Responsável:'), $responsavel_id );
         $table->addRowSet( new TLabel('Tipo Ticket:'), $tipo_ticket_id );
         $table->addRowSet( new TLabel('Sistema:'), $sistema_id );
         $table->addRowSet( new TLabel('Status:'), $status_ticket_id );
         $table->addRowSet( new TLabel('Prioridade:'), $prioridade_id );
+        $table->addRowSet( new TLabel('Total registros:'), $total_registros );
 
-
-        $this->form->setFields(array($id,$titulo,$solicitante_id,$solicitante_nome,$entcodent,$status_ticket_id,$tipo_ticket_id,$responsavel_id,$prioridade_id, $sistema_id ));
+        $this->form->setFields(array($id,$titulo,$solicitante_id,$solicitante_nome,$entcodent,$status_ticket_id,$tipo_ticket_id,$proprietario_id,
+                                     $responsavel_id,$prioridade_id, $sistema_id,$total_registros ));
 
         // keep the form filled during navigation with session data
         $this->form->setData( TSession::getValue('Ticket_filter_data') );
@@ -118,14 +129,16 @@ class TicketList extends TPage
         $status_ticket_id = new TDataGridColumn('status_ticket_id', 'S', 'center', 20);
         $id               = new TDataGridColumn('id', 'ID', 'left', 20);        
         $titulo           = new TDataGridColumn('titulo', 'Titulo', 'left', 250);
-        $solicitante_id   = new TDataGridColumn('solicitante_id', 'Cliente', 'left', 250);
+        $solicitante_id   = new TDataGridColumn('solicitante_id', 'Cliente', 'left', 100);
         $responsavel_id   = new TDataGridColumn('pessoa_responsavel->pessoa_nome', 'Responsavel', 'left', 100);
+        $data_cadastro    = new TDataGridColumn('data_cadastro', 'Dias', 'center', 35);
         $prioridade_id    = new TDataGridColumn('prioridade->nome', 'Pri', 'right', 20); //get_prioridade()->nome
 
         $status_ticket_id->setTransformer(array($this, 'retornaStatus'));
         $solicitante_id->setTransformer(array($this, 'retornaCliente'));
         $responsavel_id->setTransformer(array($this, 'retornaPessoa'));
         $prioridade_id->setTransformer(array($this, 'retornaPrioridade'));
+        $data_cadastro->setTransformer(array($this, 'retornaDias'));
 
         // add the columns to the DataGrid
         $this->datagrid->addColumn($status_ticket_id);
@@ -134,7 +147,7 @@ class TicketList extends TPage
         $this->datagrid->addColumn($titulo);
         $this->datagrid->addColumn($solicitante_id);
         $this->datagrid->addColumn($responsavel_id);
-        
+        $this->datagrid->addColumn($data_cadastro);
         $this->datagrid->addColumn($prioridade_id);
 
         // creates the datagrid column actions
@@ -145,11 +158,23 @@ class TicketList extends TPage
         $order_titulo= new TAction(array($this, 'onReload'));
         $order_titulo->setParameter('order', 'titulo');
         $titulo->setAction($order_titulo);
-
+           
+        $order_cliente= new TAction(array($this, 'onReload'));
+        $order_cliente->setParameter('order', 'solicitante_id');
+        $solicitante_id->setAction($order_cliente);
+        
         $order_status_ticket_id= new TAction(array($this, 'onReload'));
         $order_status_ticket_id->setParameter('order', 'status_ticket_id');
         $status_ticket_id->setAction($order_status_ticket_id);
+        
+        $order_dias= new TAction(array($this, 'onReload'));
+        $order_dias->setParameter('order', 'data_cadastro');
+        $data_cadastro->setAction($order_dias);
 
+        $order_pessoa_responsavel=new TAction(array($this, 'onReload'));
+        $order_pessoa_responsavel->setParameter('order', 'pessoa_responsavel->pessoa_nome');
+        $responsavel_id->setAction($order_pessoa_responsavel);
+        
         $order_prioridade_id= new TAction(array($this, 'onReload'));
         $order_prioridade_id->setParameter('order', 'prioridade->nome');
         $prioridade_id->setAction($order_prioridade_id);
@@ -230,6 +255,7 @@ class TicketList extends TPage
         TSession::setValue('TicketList_filter_status_ticket_id',   NULL);
         TSession::setValue('TicketList_filter_tipo_ticket_id',   NULL);
         TSession::setValue('TicketList_filter_responsavel_id',   NULL);
+        TSession::setValue('TicketList_filter_proprietario_id',   NULL);
         TSession::setValue('TicketList_filter_prioridade_id',   NULL);
         TSession::setValue('TicketList_filter_sistema_id',   NULL);
 
@@ -275,6 +301,11 @@ class TicketList extends TPage
         if (isset($data->tipo_ticket_id) AND ($data->tipo_ticket_id)) {
             $filter = new TFilter('tipo_ticket_id', '=', "$data->tipo_ticket_id"); // create the filter
             TSession::setValue('TicketList_filter_tipo_ticket_id',   $filter); // stores the filter in the session
+        }
+
+        if (isset($data->proprietario_id) AND ($data->proprietario_id)) {
+            $filter = new TFilter('proprietario_id', '=', "$data->proprietario_id"); // create the filter
+            TSession::setValue('TicketList_filter_proprietario_id',   $filter); // stores the filter in the session
         }
 
         if (isset($data->responsavel_id) AND ($data->responsavel_id)) {
@@ -327,6 +358,37 @@ class TicketList extends TPage
                 $newparam['order'] = '(select nome from prioridade where prioridade_id = id)';
             }
             
+            if (isset($newparam['order']) AND $newparam['order'] == 'solicitante_id')
+            {
+                $newparam['order'] = '(select 
+                                        CASE 	WHEN p.origem = 1 THEN e.entnomfan 
+                                        	WHEN p.origem = 2 THEN l.lojnomfan 
+                                        	WHEN p.origem = 3 THEN t.razao_social
+                                        END as solicitante_id
+                                        from tbz_pessoas as p 
+                                        left join car200 as e on e.entcodent = p.codigo_cadastro_origem
+                                        left join car800 as l on l.lojcodloj = p.codigo_cadastro_origem
+                                        left join tbz_empresa as t on t.id = p.codigo_cadastro_origem
+                                        where pessoa_codigo = solicitante_id)';
+            }
+            
+            if (isset($newparam['order']) AND $newparam['order'] == 'data_cadastro') {
+                $newparam['order'] = '(select CASE 	
+                                            WHEN data_cancelamento is not null THEN data_cancelamento - data_cadastro 
+                                        	WHEN data_encerramento is not null THEN data_encerramento - data_cadastro
+                                        	ELSE current_date - data_cadastro
+                                        END as dias
+                                        from ticket as t
+                                        where ticket.id = t.id)';
+                 $newparam['direction'] = 'desc';
+            }
+            
+            if (isset($newparam['order']) AND $newparam['order'] == 'pessoa_responsavel->pessoa_nome')
+            {
+                $newparam['order'] = '(select pessoa_nome from tbz_pessoas where pessoa_codigo = responsavel_id)';
+            }
+            
+            
             // default order
             if (empty($newparam['order']))
             {
@@ -360,6 +422,10 @@ class TicketList extends TPage
             
             if (TSession::getValue('TicketList_filter_tipo_ticket_id')) {
                 $criteria->add(TSession::getValue('TicketList_filter_tipo_ticket_id')); // add the session filter
+            }
+
+            if (TSession::getValue('TicketList_filter_proprietario_id')) {
+                $criteria->add(TSession::getValue('TicketList_filter_proprietario_id')); // add the session filter
             }
 
             if (TSession::getValue('TicketList_filter_responsavel_id')) {
@@ -400,6 +466,8 @@ class TicketList extends TPage
             $criteria->resetProperties();
             $count= $repository->count($criteria);
             
+            $this->onTotalTickets($count);
+            
             $this->pageNavigation->setCount($count); // count of records
             $this->pageNavigation->setProperties($param); // order, page
             $this->pageNavigation->setLimit($limit); // limit
@@ -416,6 +484,14 @@ class TicketList extends TPage
             // undo all pending operations
             TTransaction::rollback();
         }
+    }
+    
+    
+    public static function onTotalTickets($param)
+    {
+        $obj = new StdClass;
+        $obj->total_registros         = $param;  
+        TForm::sendData('form_Ticket', $obj, FALSE, FALSE);
     }
     
     /**
@@ -480,6 +556,7 @@ class TicketList extends TPage
         TSession::setValue('TicketList_filter_entidade_id',   NULL);
         TSession::setValue('TicketList_filter_status_ticket_id',   NULL);
         TSession::setValue('TicketList_filter_tipo_ticket_id',   NULL);
+        TSession::setValue('TicketList_filter_proprietario_id',   NULL);
         TSession::setValue('TicketList_filter_responsavel_id',   NULL);
         TSession::setValue('TicketList_filter_prioridade_id',   NULL);
         TSession::setValue('TicketList_filter_sistema_id',   NULL);
@@ -508,7 +585,7 @@ class TicketList extends TPage
     
     public function retornaStatus($campo, $object, $row)
     {
-         $status = array(1 => 'Ativo', 2 => 'Pendente', 3 => 'Encerrado', 4 => 'Cancelado');           
+         $status = array(1 => 'Ativo', 2 => 'Pendente', 3 => 'Encerrado', 4 => 'Cancelado', 5 => 'Fixo', 6 => 'Cobrança');           
         
          $row->popover = 'true';
          $row->popcontent = "<table class='popover-table' border='0'><tr><td>Status: {$status[$object->status_ticket_id]}</td></tr></table>";
@@ -517,6 +594,22 @@ class TicketList extends TPage
          $campo = new TImage($object->status_ticket_id.'.png');
          $campo->height=15;
          $campo->width=15;
+         return $campo;
+    }
+    
+    public function retornaDias($campo, $object, $row)
+    {
+         $string = new StringsUtil;
+         $dias = 0;
+         if($object->data_cancelamento){
+             $dias = $string->subtrair_datas($object->data_cadastro, $object->data_cancelamento);
+         } elseif($object->data_encerramento){
+             $dias = $string->subtrair_datas($object->data_cadastro, $object->data_encerramento);
+         } else {
+             $dias = $string->subtrair_datas($object->data_cadastro, date('Y-m-d'));
+         }
+         
+         $campo = $dias;
          return $campo;
     }
      

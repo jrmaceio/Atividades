@@ -128,6 +128,69 @@ class StringsUtil
         
     }
     
+    function calcularCargaHorariaDiaria($campo, $object, $row)
+    {
+         if($object->hora_saida and $object->hora_saida_tarde){
+            $HoraEntrada         = new DateTime($object->hora_entrada);
+            $HoraSaida           = new DateTime($object->hora_saida);
+                    
+            $campo = $HoraSaida->diff($HoraEntrada)->format('%H:%I:%S');
+            $totalPrimeiroTurno  = $this->time_to_sec($campo);
+            
+            $HoraEntradaTarde    = new DateTime($object->hora_entrada_tarde);
+            $HoraSaidaTarde      = new DateTime($object->hora_saida_tarde);
+                    
+            $campo = $HoraSaidaTarde->diff($HoraEntradaTarde)->format('%H:%I:%S');
+            $totalSegundoTurno  = $this->time_to_sec($campo);
+            
+            $total = $totalSegundoTurno + $totalPrimeiroTurno;
+            $campo = $this->sec_to_time($total); 
+            
+            return substr($campo,0,-3);         
+        }
+        
+        if($object->hora_saida and !$object->hora_saida_tarde) {   
+            $HoraEntrada         = new DateTime($object->hora_entrada);
+            $HoraSaida           = new DateTime($object->hora_saida);
+                    
+            $campo = $HoraSaida->diff($HoraEntrada)->format('%H:%I');
+                                    
+            return $campo;
+        }
+        
+        if(!$object->hora_saida and $object->hora_saida_tarde) {   
+            $HoraEntrada         = new DateTime($object->hora_entrada_tarde);
+            $HoraSaida           = new DateTime($object->hora_saida_tarde);
+                    
+            $campo = $HoraSaida->diff($HoraEntrada)->format('%H:%I');
+                                    
+            return $campo;
+        }
+    
+    }
+    
+    function retornaIntervalo($campo, $object, $row)
+    {
+         $intervalo = Ponto::horaPreenchidas($object->data_ponto, $object->colaborador_id);
+         return substr($intervalo, 0, -3);
+    }
+    
+    function calculaPercentualProdutividade($campo, $object, $row)
+    {       
+        $intervalo = $this->retornaIntervalo($campo, $object, $row);
+        $ponto = new CalculoHorario;
+        $horaPonto = $ponto->retornoCargaHorariaDiaria($object);
+        
+        if($horaPonto){        
+            $campo = round($this->time_to_sec($intervalo) * 100 / $this->time_to_sec($horaPonto) );
+            if($campo > 59){
+                return "<span style='color:#007BFF'><b>".$campo."%</b></span>";
+            } else {
+                return "<span style='color:#FFB300'><b>".$campo."%</b></span>";
+            } 
+        }   
+    }
+    
 }
 
 ?>

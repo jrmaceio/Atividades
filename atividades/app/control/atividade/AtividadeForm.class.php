@@ -40,15 +40,29 @@ class AtividadeForm extends TPage
             
             $ultimoPonto = Ponto::retornaUltimoPonto($logado->pessoa_codigo);
             $ponto = new Ponto($ultimoPonto);
-            
-            if($ponto->hora_saida)
+
+            if($ponto->hora_saida and !$ponto->hora_entrada_tarde)
+            {
+                $action = new TAction(array('PontoFormList', 'onReload'));
+                new TMessage('error', 'Não existe ponto com horario em aberto!', $action);
+            }
+
+            if($ponto->hora_saida_tarde)
             {
                 $action = new TAction(array('PontoFormList', 'onReload'));
                 new TMessage('error', 'Não existe ponto com horario em aberto!', $action);
             }
             
             $data_padrao = $string->formatDateBR($ponto->data_ponto);
-            $hora_padrao = Ponto::retornaHoraInicio($string->formatDate($data_padrao), $logado->pessoa_codigo);   
+            
+            $horario = $ponto->hora_entrada_tarde ? $ponto->hora_entrada_tarde : $ponto->hora_entrada;
+                                    
+            $hora_padrao = Ponto::retornaHoraInicio($string->formatDate($data_padrao), $logado->pessoa_codigo, $horario);
+            
+            if(!$hora_padrao){
+                $hora_padrao = $horario;
+            }
+               
             TTransaction::close();
         }
         catch(Exception $e)
@@ -80,7 +94,10 @@ class AtividadeForm extends TPage
         $colaborador_nome               = new TEntry('colaborador_nome');
         $colaborador_nome->setEditable(FALSE);
         $colaborador_nome->setValue($logado->pessoa_nome);
-        $tipo_atividade_id              = new TDBCombo('tipo_atividade_id', 'atividade', 'TipoAtividade', 'id', 'nome', 'nome');
+        
+        $criteria = new TCriteria;
+        $criteria->add(new TFilter("ativo", "=", 1));
+        $tipo_atividade_id              = new TDBCombo('tipo_atividade_id', 'atividade', 'TipoAtividade', 'id', 'nome', 'nome',$criteria);
         
         $sistema_id                     = new TDBCombo('sistema_id', 'atividade', 'Sistema', 'id', 'nome');
         

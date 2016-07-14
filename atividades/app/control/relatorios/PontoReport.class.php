@@ -44,6 +44,15 @@ class PontoReport extends TPage
         $mes_atividade->setValue(date('m'));
         $mes_atividade->setSize(250);
         
+        $ano_atividade                  = new TCombo('ano_atividade');
+        $anos = array(
+                            2015 => '2015',
+                            2016 => '2016'
+                      );         
+        $ano_atividade->addItems($anos);
+        $ano_atividade->setDefaultOption(FALSE);
+        $ano_atividade->setValue(date('Y'));  
+                
         $output_type                    = new TRadioGroup('output_type');
         $output_type->setSize(100);
 
@@ -52,10 +61,11 @@ class PontoReport extends TPage
 
         // add one row for each form field
         $table->addRowSet( new TLabel('Mês referencia:'), $mes_atividade );
+        $table->addRowSet( new TLabel('Ano referencia:'), $ano_atividade );
         $table->addRowSet( $label_output_type = new TLabel('Saida:'), $output_type );
         $label_output_type->setFontColor('#FF0000');
 
-        $this->form->setFields(array($mes_atividade,$output_type));
+        $this->form->setFields(array($mes_atividade,$ano_atividade,$output_type));
         
         $output_type->addItems(array('html'=>'HTML', 'pdf'=>'PDF', 'rtf'=>'RTF'));;
         $output_type->setValue('html');
@@ -100,18 +110,26 @@ class PontoReport extends TPage
     
     function retornaPonto($user, $dia)
     {
-    
-        $ponto = Ponto::retornaTempoPonto($user, $dia);
-                        
-        $total = new DateTime($ponto);
-        $almoco = new DateTime('01:00:00');
-        $limite = new DateTime('06:00:00');
-        if($total > $limite)
+        $totalPonto = null;
+            
+        $criteria = new TCriteria;
+        
+        $criteria->add(new TFilter("data_ponto", "=", $dia),  TExpression::AND_OPERATOR);        
+        $criteria->add(new TFilter("colaborador_id", "=", $user),          TExpression::AND_OPERATOR);
+
+        $repo = new TRepository('Ponto');
+        $pontos = $repo->load($criteria);
+
+        $horario = new CalculoHorario;
+           
+        foreach($pontos as $ponto)
         {
-            $ponto = $total->diff($almoco)->format('%H:%I:%S');
+            $horaPonto = $horario->retornoCargaHorariaDiaria($ponto);                                 
+            $totalPonto += $this->string->time_to_sec($horaPonto.':00');
         }
-    
-        return $ponto;
+        
+        return $this->string->sec_to_time($totalPonto);
+
     }
 
 
@@ -129,8 +147,8 @@ class PontoReport extends TPage
             // get the form data into an active record
             $formdata = $this->form->getData();
             
-            $dataInicial = date('Y').'-'.str_pad($formdata->mes_atividade, 2, 0, STR_PAD_LEFT).'-01';
-            $dataFinal   = date('Y').'-'.str_pad($formdata->mes_atividade, 2, 0, STR_PAD_LEFT).'-'.cal_days_in_month(CAL_GREGORIAN, $formdata->mes_atividade, date('Y'));
+            $dataInicial = $formdata->ano_atividade.'-'.str_pad($formdata->mes_atividade, 2, 0, STR_PAD_LEFT).'-01';
+            $dataFinal   = $formdata->ano_atividade.'-'.str_pad($formdata->mes_atividade, 2, 0, STR_PAD_LEFT).'-'.cal_days_in_month(CAL_GREGORIAN, $formdata->mes_atividade, $formdata->ano_atividade);
             
             $dias = Atividade::retornaDiasAtividades($dataInicial, $dataFinal);
             

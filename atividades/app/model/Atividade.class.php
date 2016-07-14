@@ -51,7 +51,7 @@ class Atividade extends TRecord
         $result = $conn->query("select distinct(t.solicitante_id), sum(a.hora_fim - a.hora_inicio)
                                from atividade as a 
                                inner join ticket as t on a.ticket_id = t.id
-                               where a.data_atividade between '{$dataInicial}' and '{$dataFinal}' and a.ticket_id not in (328, 514) {$col} {$tic}
+                               where a.data_atividade between '{$dataInicial}' and '{$dataFinal}' and a.tipo_atividade_id not in (17, 10) {$col} {$tic}
                                group by t.solicitante_id");
         
         return $result;    
@@ -77,7 +77,7 @@ class Atividade extends TRecord
         $result = $conn->query("select distinct(a.sistema_id) , s.nome
                                 from atividade as a 
                                 inner join sistema as s on a.sistema_id = s.id
-                                where a.data_atividade between '{$dataInicial}' and '{$dataFinal}' and a.ticket_id not in (328, 514) {$col} {$tic}
+                                where a.data_atividade between '{$dataInicial}' and '{$dataFinal}' and a.tipo_atividade_id not in (17, 10) {$col} {$tic}
                                 order by s.nome");
         
         return $result;    
@@ -136,7 +136,7 @@ class Atividade extends TRecord
         $conn = TTransaction::get();
         
         $result = $conn->query("select sum((a.hora_fim - a.hora_inicio)) as total from atividade as a
-                                where extract('month' from a.data_atividade) = {$mes} and extract('year' from a.data_atividade) = {$ano} and a.ticket_id not in (328, 514) {$col} {$tic}");
+                                where extract('month' from a.data_atividade) = {$mes} and extract('year' from a.data_atividade) = {$ano} and a.tipo_atividade_id not in (17, 10) {$col} {$tic}");
         
         $data = null;
         
@@ -168,7 +168,7 @@ class Atividade extends TRecord
         $conn = TTransaction::get();
         $result = $conn->query("select a.tipo_atividade_id,t.nome, sum((a.hora_fim - a.hora_inicio)) as total from atividade as a
                                 inner join tipo_atividade as t on a.tipo_atividade_id = t.id
-                                where extract('month' from a.data_atividade) = {$mes} and extract('year' from a.data_atividade) = {$ano} and a.ticket_id not in (328, 514) {$col} {$tic}
+                                where extract('month' from a.data_atividade) = {$mes} and extract('year' from a.data_atividade) = {$ano} and a.tipo_atividade_id not in (17, 10) {$col} {$tic}
                                 group by tipo_atividade_id, nome
                                 order by nome
                                 ");
@@ -189,7 +189,7 @@ class Atividade extends TRecord
         
         $conn = TTransaction::get();
         $result = $conn->query("select sum((a.hora_fim - a.hora_inicio)) as total, ticket_id from atividade as a
-                                where extract('month' from a.data_atividade) = {$mes} and extract('year' from a.data_atividade) = {$ano} and a.ticket_id = 328  {$col} 
+                                where extract('month' from a.data_atividade) = {$mes} and extract('year' from a.data_atividade) = {$ano} and a.tipo_atividade_id = 10  {$col} 
                                 group by ticket_id 
                                 order by ticket_id");
         
@@ -216,7 +216,7 @@ class Atividade extends TRecord
         
         $conn = TTransaction::get();
         $result = $conn->query("select sum((a.hora_fim - a.hora_inicio)) as total, ticket_id from atividade as a
-                                where extract('month' from a.data_atividade) = {$mes} and extract('year' from a.data_atividade) = {$ano} and a.ticket_id = 514 {$col} 
+                                where extract('month' from a.data_atividade) = {$mes} and extract('year' from a.data_atividade) = {$ano} and a.tipo_atividade_id = 17 {$col} 
                                 group by ticket_id 
                                 order by ticket_id");
         
@@ -244,7 +244,7 @@ class Atividade extends TRecord
         
         $conn = TTransaction::get();
         $result = $conn->query("select sum((a.hora_fim - a.hora_inicio)) as total, ticket_id from atividade as a
-                                where extract('month' from a.data_atividade) = {$mes} and extract('year' from a.data_atividade) = {$ano} and (a.ticket_id = 328 or a.ticket_id = 514) {$col} 
+                                where extract('month' from a.data_atividade) = {$mes} and extract('year' from a.data_atividade) = {$ano} and (a.tipo_atividade_id = 17 or a.tipo_atividade_id = 10) {$col} 
                                 group by ticket_id 
                                 order by ticket_id");
         
@@ -271,7 +271,7 @@ class Atividade extends TRecord
         $conn = TTransaction::get();
         $result = $conn->query("select a.sistema_id, s.nome, sum((a.hora_fim - a.hora_inicio)) as total from atividade as a 
                                 inner join sistema as s on a.sistema_id = s.id
-                                where extract('month' from a.data_atividade) = {$mes} and extract('year' from a.data_atividade) = {$ano} and a.ticket_id not in (328, 514) {$col} {$tic}
+                                where extract('month' from a.data_atividade) = {$mes} and extract('year' from a.data_atividade) = {$ano} and a.tipo_atividade_id not in (17, 10) {$col} {$tic}
                                 group by a.sistema_id, s.nome
                                 order by s.nome
                                 ");
@@ -280,26 +280,31 @@ class Atividade extends TRecord
         
     }
     
-    public function retornaAtividadesClienteColaborador($colaborador, $mes, $ano, $tickets)
+    public function retornaAtividadesClienteColaborador($colaborador, $mes, $ano, $tickets = NULL, $associado = NULL)
     {
                 
         $tic = "";
-        if($tickets)
-        {
+        if($tickets) {
             $tic = " and a.ticket_id IN ({$tickets}) ";
         }
         
+        $ass = "";
+        if ($associado == 1) {
+            $ass = " and t.id <> 202 ";        
+        } elseif($associado == 2){
+            $ass = " and t.id = 202 "; 
+        }
+        
         $col = "";
-        if($colaborador > 0)
-        {
+        if($colaborador > 0) {
             $col = " and a.colaborador_id = {$colaborador} ";
  
         }
         
         $conn = TTransaction::get();
         $result = $conn->query("select t.solicitante_id, sum((a.hora_fim - a.hora_inicio)) as total from atividade as a 
-                                inner join ticket as t on a.ticket_id = t.id
-                                where extract('month' from a.data_atividade) = {$mes} and extract('year' from a.data_atividade) = {$ano} and a.ticket_id not in (328, 514) {$col} {$tic}
+                                inner join ticket as t on a.ticket_id = t.id {$ass}
+                                where extract('month' from a.data_atividade) = {$mes} and extract('year' from a.data_atividade) = {$ano} and a.tipo_atividade_id not in (17, 10) {$col} {$tic}
                                 group by solicitante_id
                                 ");
         
@@ -328,7 +333,7 @@ class Atividade extends TRecord
         $conn = TTransaction::get();
         $result = $conn->query("SELECT hora_fim FROM atividade 
                                     WHERE colaborador_id = {$user} 
-                                    and data_atividade = (SELECT data_ponto FROM ponto WHERE colaborador_id = {$user} and data_atividade = '{$data}' and hora_saida is null order by data_ponto desc limit 1)
+                                    and data_atividade = (SELECT data_ponto FROM ponto WHERE colaborador_id = {$user} and data_atividade = '{$data}' and (hora_saida is null or hora_saida_tarde is null) order by data_ponto desc limit 1)
                                     order by data_atividade desc, id desc limit 1");
         
         foreach ($result as $row)

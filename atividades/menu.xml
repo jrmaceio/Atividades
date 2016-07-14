@@ -98,6 +98,10 @@
             <menuitem label='Indicador Produtividade'>
                 <icon>fa:fa fa-users fa-fw</icon>
                 <action>PontoReport</action>
+            </menuitem>
+            <menuitem label='Espelho do Ponto'>
+                <icon>fa:fa fa-calendar-check-o fa-fw</icon>
+                <action>UserPontoReport</action>
             </menuitem>   
         </menu>
     </menuitem>
@@ -137,6 +141,14 @@
             <menuitem label='Status Ticket'>
                 <icon></icon>
                 <action>StatusTicketFormList</action>
+            </menuitem>
+            <menuitem label='Departamentos'>
+                <icon></icon>
+                <action>DepartamentoFormList</action>
+            </menuitem>     
+            <menuitem label='Pessoas Departamentos'>
+                <icon></icon>
+                <action>PessoaDepartamentoList</action>
             </menuitem>         
                             
        </menu>                   

@@ -55,7 +55,7 @@ class AtividadeList extends TPage
         $newparam['order'] = 'pessoa_nome';
         $newparam['direction'] = 'asc';
         $criteria->setProperties($newparam); // order, offset
-        $solicitante_id                 = new TDBSeekButton('solicitante_id', 'atividade','form_search_Ticket','Pessoa','pessoa_nome','solicitante_id', 'solicitante_nome', $criteria);
+        $solicitante_id                 = new TDBSeekButton('solicitante_id', 'atividade','form_search_Atividade','Pessoa','pessoa_nome','solicitante_id', 'solicitante_nome', $criteria);
         $solicitante_nome               = new TEntry('solicitante_nome');
         $solicitante_nome->setEditable(FALSE);
         $total_atividades               = new TEntry('total_atividades');
